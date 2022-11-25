@@ -5,35 +5,6 @@
 ### Curator has permission to review his courses and check home tasks
 ### Student has permission to review his courses and do home tasks to them
 
-## General URL’s
-
-|**Provider**|**Service Name**|**URL**|
-| :- | :- | :- |
-|Hosting provider|AWS||
-|CI/CD provider|CircleCI||
-|Email provider|||
-|DNS provider|||
-|SSL storage|||
-|Logs provider|||
-|Error handling provider|Sentry|| 
-|Performance monitoring provider|||
-|Git workflow|Google Drive||
-|Code checker|SonarQube||
-
-## Application URL’s
-
-|**Environment**|**Service Name**|**URL**|
-| :- | :- | :- |
-|Production|Website||
-||Swagger||
-||Admin Panel||
-|Staging|Website||
-||Swagger||
-||Admin Panel||
-|QA|Website||
-||Swagger||
-||Admin Panel||
-
 ## Tech details
 
 |**Resource**|**Resource Name**|**Version**|**Comment**|
