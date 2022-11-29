@@ -2,11 +2,12 @@ from django.contrib.auth import get_user_model
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from users.models import InvitationToken
 from users.serializers import TokenEmailObtainPairSerializer, RequestEmailSerializer, SecurityCodeSerializer, \
-    CreateNewPasswordSerializer
+    CreateNewPasswordSerializer, NewUserSerializer
 
 User = get_user_model()
 
@@ -60,3 +61,14 @@ class CreateNewPassword(generics.GenericAPIView):
         user.save()
         InvitationToken.objects.filter(user_id=user.id).delete()
         return Response({'email': serializer.validated_data['email']}, status=status.HTTP_200_OK)
+
+
+class UserSignUpAPIView(generics.ListCreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = NewUserSerializer
+    permission_classes = (AllowAny, )
+
+    def perform_create(self, serializer):
+        user_data = dict(serializer.validated_data)
+        del user_data['confirm_password']
+        User.objects.create_user(**user_data)

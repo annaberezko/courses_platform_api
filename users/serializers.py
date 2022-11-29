@@ -57,3 +57,21 @@ class CreateNewPasswordSerializer(serializers.Serializer):
         except exceptions.ValidationError as e:
             raise serializers.ValidationError({'password': list(e.messages)})
         return attr
+
+
+class NewUserSerializer(serializers.Serializer):
+    email = serializers.EmailField(min_length=2, required=True)
+    first_name = serializers.CharField(required=False)
+    last_name = serializers.CharField(required=False)
+    password = serializers.CharField(write_only=True, required=True, validators=[validators.validate_password])
+    confirm_password = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        fields = ['email', 'first_name', 'last_name', 'password', 'confirm_password']
+
+    def validate(self, attrs):
+        if User.objects.filter(email=attrs['email']).first():
+            raise serializers.ValidationError({'email': 'This email address is already used.'})
+        if attrs['password'] != attrs['confirm_password']:
+            raise serializers.ValidationError({'confirm_password': "Password fields didn't match."})
+        return attrs
