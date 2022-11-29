@@ -1,7 +1,7 @@
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.db import models
 
-from courses_platform_api.choices_types import ProfileRoles
+from users.choices_types import ProfileRoles
 from users.managers import UserManager
 
 
@@ -16,7 +16,7 @@ class User(AbstractBaseUser):
     first_name = models.CharField('first name', max_length=50, null=True, blank=True)
     last_name = models.CharField('last name', max_length=50, null=True, blank=True)
     email = models.EmailField('email address', unique=True)
-    password = models.CharField('password', max_length=40, null=True, blank=True)
+    password = models.CharField('password', max_length=120, null=True, blank=True)
     phone = models.CharField('phone number', max_length=20, null=True, blank=True)
     google = models.CharField('google account', max_length=40, null=True, blank=True)
     facebook = models.CharField('facebook account', max_length=40, null=True, blank=True)
