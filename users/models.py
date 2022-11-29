@@ -1,6 +1,14 @@
-from django.contrib.auth.base_user import AbstractBaseUser
-from django.db import models
+import random
+from string import digits
 
+from django.contrib.auth.base_user import AbstractBaseUser
+from django.core.mail import send_mail
+from django.db import models
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from rest_framework.authtoken.models import Token
+
+from courses_platform_api.settings import EMAIL_HOST_USER, FRONT_END_NEW_PASSWORD_URL
 from users.choices_types import ProfileRoles
 from users.managers import UserManager
 
@@ -32,5 +40,48 @@ class User(AbstractBaseUser):
     def get_full_name(self):
         return f'{self.first_name} {self.last_name}'
 
+    def generate_security_code(self, length=6):
+        return ''.join(random.sample(digits, length))
+
+    def send_security_code(self):
+        self.security_code = self.generate_security_code()
+        self.save()
+
+        context = {
+            'first_name': self.first_name,
+            'second_name': self.last_name,
+            'security_code': self.security_code
+        }
+        subject = 'Amity security code'
+        html = render_to_string('email_security_code.html', context=context)
+        message = strip_tags(html)
+        send_mail(subject, message, EMAIL_HOST_USER, [self.email], html_message=html)
+
+    def send_invitation_link(self):
+        token = InvitationToken.objects.create(user=self)
+
+        context = {
+            'first_name': self.first_name,
+            'second_name': self.last_name,
+            'link_url': FRONT_END_NEW_PASSWORD_URL + '?token=' + str(token)
+        }
+
+        subject = 'Invitation to Amity password creation'
+        html = render_to_string('invitation_to_platform.html', context=context)
+        message = strip_tags(html)
+        send_mail(subject, message, EMAIL_HOST_USER, [self.email], html_message=html)
+
     def __str__(self):
-        return "%s %s" % (self.first_name, self.last_name)
+        return self.get_full_name()
+
+    def inactivate_user(self):
+        self.is_active = False
+        self.save(update_fields=['is_active'])
+
+    def activate_user(self):
+        self.is_active = True
+        self.save(update_fields=['is_active'])
+
+
+class InvitationToken(Token):
+    type = models.CharField(max_length=20, default="invitation")

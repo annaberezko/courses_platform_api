@@ -13,7 +13,6 @@ class TestUserModel(APITestCase):
         self.assertTrue(user.is_active)
         self.assertTrue(user.last_login)
         self.assertTrue(user.date_joined)
-        print(user.last_login, user.date_joined)
         self.assertEqual(user.email, 'super@super.super')
         self.assertEqual(user.role, ProfileRoles.SUPERUSER)
 

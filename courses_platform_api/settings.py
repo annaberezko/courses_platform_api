@@ -81,6 +81,21 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+    {
+        'NAME': 'users.validators.MaximumLengthValidator',
+    },
+    {
+        'NAME': 'users.validators.NumberValidator',
+    },
+    {
+        'NAME': 'users.validators.UppercaseValidator',
+    },
+    {
+        'NAME': 'users.validators.LowercaseValidator',
+    },
+    {
+        'NAME': 'users.validators.SymbolValidator',
+    },
 ]
 
 LANGUAGE_CODE = 'en-us'
@@ -95,12 +110,29 @@ STATIC_URL = config('STATIC_URL', default='')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# SMTP
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+EMAIL_PORT = 587
+
+FRONT_END_DOMAIN_URL = config('FRONT_END_DOMAIN_URL', default='')
+FRONT_END_NEW_PASSWORD_PART = config('FRONT_END_NEW_PASSWORD_PART', default='')
+FRONT_END_NEW_PASSWORD_URL = f'{FRONT_END_DOMAIN_URL}{FRONT_END_NEW_PASSWORD_PART}'
+
+
 VALID_EXTENSIONS = ['jpg', 'png', 'jpeg']
 
 REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 50,
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
 }
 
 SIMPLE_JWT = {
