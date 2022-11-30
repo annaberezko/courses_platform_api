@@ -18,7 +18,6 @@ class TestUserModel(APITestCase):
 
     def test_create_user_create_profile_role(self):
         user = User.objects.create_user(email='user@user.user')
-        self.assertFalse(user.is_active)
         self.assertTrue(user.last_login)
         self.assertTrue(user.date_joined)
         self.assertEqual(user.email, 'user@user.user')

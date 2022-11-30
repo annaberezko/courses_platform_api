@@ -2,7 +2,7 @@
 
 ### Superuser administrate all users and data
 ### Admin can create courses, administrate them and see his curators and students
-### Curator has permission to review his courses and check home tasks
+### Curator has permission to review his courses, students of these courses, and check home tasks
 ### Student has permission to review his courses and do home tasks to them
 
 ## Tech details
