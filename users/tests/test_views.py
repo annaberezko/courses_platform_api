@@ -1,10 +1,10 @@
 from django.contrib.auth import get_user_model
-from django.core import mail
 from django.urls import reverse
 from rest_framework import status
 
 from rest_framework.test import APITestCase, APIClient
 
+from users.choices_types import ProfileRoles
 from users.models import InvitationToken
 
 User = get_user_model()
@@ -29,12 +29,6 @@ class TokenObtainPairViewTestCase(APITestCase):
     def test_ensure_that_client_doesnt_provide_any_data(self):
         response = self.client.post(self.url, {})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_ensure_that_inactive_user_have_no_access(self):
-        self.user.is_active = False
-        self.user.save()
-        response = self.client.post(self.url, {'email': 'super@super.super', 'password': 'strong'})
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 class ResetPasswordRequestEmailTestCase(APITestCase):
@@ -94,7 +88,7 @@ class ResetPasswordSecurityCodeTestCase(APITestCase):
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue('token' in response.data)
-        self.assertEqual(len(mail.outbox), 1)
+        self.assertTrue(InvitationToken.objects.filter(user=self.user).first())
 
     def test_security_code_empty_data(self):
         data = {}
@@ -104,12 +98,12 @@ class ResetPasswordSecurityCodeTestCase(APITestCase):
         self.assertEqual(response.data['security_code'][0], 'This field is required.')
 
 
-class CreateNewPasswordTestCase(APITestCase):
+class RecoveryPasswordTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
-        self.url = reverse('v1.0:users:create-new-password')
+        self.url = reverse('v1.0:users:recovery-password')
         self.user = User.objects.create_user(email='user@user.user', password='Vtam!ndpr123')
-        self.token = str(InvitationToken.objects.filter(user=self.user).first())
+        self.token = str(InvitationToken.objects.create(user=self.user))
 
     def test_create_new_password_add_email_field(self):
         data = {'token': self.token, 'password': 'User-password123', 'confirm_password': 'User-password123'}
@@ -202,7 +196,7 @@ class CreateNewPasswordTestCase(APITestCase):
         data = {'token': self.token, 'password': 'Vtam!ndpr123', 'confirm_password': 'Vtam!ndpr123'}
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['error'][0], 'This password can not be used.')
+        self.assertEqual(response.data['error'][0], 'Old password can not be used.')
 
 
 class UserSignUpAPIViewTestCase(APITestCase):
@@ -268,3 +262,61 @@ class UserSignUpAPIViewTestCase(APITestCase):
         response = self.client.post(self.url, self.data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['email'][0], "user with this email address already exists.")
+
+
+class UsersListAPIViewTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.url = reverse('v1.0:users:users-list')
+        self.user = User.objects.create_superuser(email='super@super.super', password='strong')
+        self.user1 = User.objects.create_superuser(email='user1@user.com', password='strong')
+        self.user2 = User.objects.create_user(email='user2@user.com', password='strong', role=ProfileRoles.ADMINISTRATOR)
+        self.user3 = User.objects.create_user(email='user3@user.com', password='strong', role=ProfileRoles.ADMINISTRATOR)
+        self.user4 = User.objects.create_user(email='user4@user.com', password='strong', role=ProfileRoles.CURATOR)
+        self.user5 = User.objects.create_user(email='user5@user.com', password='strong', role=ProfileRoles.CURATOR)
+        self.user6 = User.objects.create_user(email='user6@user.com', password='strong', role=ProfileRoles.CURATOR)
+        self.user7 = User.objects.create_user(email='user7@user.com', password='strong', first_name="User", last_name="Aaa")
+        self.user8 = User.objects.create_user(email='user8@user.com', password='strong', first_name="User", last_name="Bbb")
+        self.user9 = User.objects.create_user(email='user9@user.com', password='strong', first_name="Aaa", last_name="Bbb")
+        self.user10 = User.objects.create_user(email='user10@user.com', password='strong', first_name="Bbb", last_name="Aaa")
+        self.client = APIClient()
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+
+    def test_users_list_unauthorized_permission_no_access(self):
+        client = APIClient()
+        response = client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_users_list_student_permission_no_access(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user7@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_list_superuser_see_all_roles_except_superusers(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 9)
+
+    def test_list_administrator_see_all_belows_roles(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user2@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 7)
+
+    def test_list_curator_see_all_belows_roles(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user4@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 4)
+
+    def test_users_list_ordering_by_fullname_desc(self):
+        response = self.client.get(self.url + '?ordering=-full_name')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['results'][0]['full_name'], "User Bbb")
+        self.assertEqual(response.data['results'][1]['full_name'], "User Aaa")
+        self.assertEqual(response.data['results'][2]['full_name'], "Bbb Aaa")
+        self.assertEqual(response.data['results'][3]['full_name'], "Aaa Bbb")

@@ -14,23 +14,16 @@ from users.managers import UserManager
 
 
 class User(AbstractBaseUser):
-    """
-    When is_active=False, Administrator has limitation:
-    can create only one course
-    can't create curator
-    can create only 5 learner
-    """
     role = models.IntegerField('role', choices=ProfileRoles.CHOICES, default=3)
     first_name = models.CharField('first name', max_length=50, null=True, blank=True)
     last_name = models.CharField('last name', max_length=50, null=True, blank=True)
     email = models.EmailField('email address', unique=True)
-    password = models.CharField('password', max_length=120, null=True, blank=True)
+    password = models.CharField('password', max_length=120)
     phone = models.CharField('phone number', max_length=20, null=True, blank=True)
     google = models.CharField('google account', max_length=40, null=True, blank=True)
     facebook = models.CharField('facebook account', max_length=40, null=True, blank=True)
     last_login = models.DateTimeField('last login date', auto_now_add=True)
     date_joined = models.DateTimeField('join date', auto_now_add=True)
-    is_active = models.BooleanField('is active', default=False)
     security_code = models.CharField('security code', max_length=6, null=True, blank=True)
 
     objects = UserManager()
@@ -52,36 +45,35 @@ class User(AbstractBaseUser):
             'second_name': self.last_name,
             'security_code': self.security_code
         }
-        subject = 'Amity security code'
+        subject = 'Courses platform security code'
         html = render_to_string('email_security_code.html', context=context)
-        message = strip_tags(html)
-        send_mail(subject, message, EMAIL_HOST_USER, [self.email], html_message=html)
-
-    def send_invitation_link(self):
-        token = InvitationToken.objects.create(user=self)
-
-        context = {
-            'first_name': self.first_name,
-            'second_name': self.last_name,
-            'link_url': FRONT_END_NEW_PASSWORD_URL + '?token=' + str(token)
-        }
-
-        subject = 'Invitation to Amity password creation'
-        html = render_to_string('invitation_to_platform.html', context=context)
         message = strip_tags(html)
         send_mail(subject, message, EMAIL_HOST_USER, [self.email], html_message=html)
 
     def __str__(self):
         return self.get_full_name()
 
-    def inactivate_user(self):
-        self.is_active = False
-        self.save(update_fields=['is_active'])
-
-    def activate_user(self):
-        self.is_active = True
-        self.save(update_fields=['is_active'])
-
 
 class InvitationToken(Token):
     type = models.CharField(max_length=20, default="invitation")
+
+
+class AdministratorAccess(models.Model):
+    """
+    When access=False, Administrator has limitation:
+    can create only one course
+    can't create curator (his previous curator get is_active=False)
+    can create only 5 learner
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    date_start = models.DateField(auto_now_add=True)
+    date_end = models.DateField(null=True, blank=True)
+    access = models.BooleanField('access', default=False)
+
+    def inactivate_user(self):
+        self.access = False
+        self.save(update_fields=['access'])
+
+    def activate_user(self):
+        self.access = True
+        self.save(update_fields=['access'])

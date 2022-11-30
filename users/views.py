@@ -1,17 +1,17 @@
 from django.contrib.auth import get_user_model
-from django.db.models import F, Value
+from django.db.models import Value
 from django.db.models.functions import Concat
-from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status
-from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from courses_platform_api.permissions import IsSuperuserOrAdministrator
+from courses_platform_api.permissions import IsSuperuserOrAdministratorOrCurator
+from users.choices_types import ProfileRoles
 from users.models import InvitationToken
 from users.serializers import TokenEmailObtainPairSerializer, RequestEmailSerializer, SecurityCodeSerializer, \
-    CreateNewPasswordSerializer, NewUserSerializer, UserSignUpSerializer
+    UserSignUpSerializer, UsersListSerializer, RecoveryPasswordSerializer, UsersListForCuratorSerializer
 
 User = get_user_model()
 
@@ -20,7 +20,7 @@ class EmailTokenObtainPairView(TokenObtainPairView):
     serializer_class = TokenEmailObtainPairSerializer
 
 
-class ResetPasswordRequestEmail(generics.GenericAPIView):
+class ResetPasswordRequestEmailAPIView(generics.GenericAPIView):
     serializer_class = RequestEmailSerializer
     permission_classes = (AllowAny, )
 
@@ -35,7 +35,7 @@ class ResetPasswordRequestEmail(generics.GenericAPIView):
             return Response({'error': 'There is no account with that email.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ResetPasswordSecurityCode(generics.GenericAPIView):
+class ResetPasswordSecurityCodeAPIView(generics.GenericAPIView):
     serializer_class = SecurityCodeSerializer
     permission_classes = (AllowAny, )
 
@@ -53,8 +53,8 @@ class ResetPasswordSecurityCode(generics.GenericAPIView):
             return Response({'error': 'There is no user with that email.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CreateNewPassword(generics.GenericAPIView):
-    serializer_class = CreateNewPasswordSerializer
+class RecoveryPasswordAPIView(generics.GenericAPIView):
+    serializer_class = RecoveryPasswordSerializer
     permission_classes = (AllowAny, )
 
     def post(self, request):
@@ -80,16 +80,20 @@ class UserSignUpAPIView(generics.CreateAPIView):
 
 class UsersListAPIView(generics.ListCreateAPIView):
     queryset = User.objects.all()
-    serializer_class = NewUserSerializer
-    permission_classes = (IsSuperuserOrAdministrator, )
+    serializer_class = UsersListSerializer
+    permission_classes = (IsSuperuserOrAdministratorOrCurator, )
 
-    filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
-    ordering_fields = ['role', 'full_name', 'is_active']
-    ordering = ['role', 'full_name', 'is_active']
-    search_fields = ['full_name']
+    filter_backends = [OrderingFilter]
+    ordering_fields = ['role', 'full_name']
+    ordering = ['role', 'full_name']
 
     def get_queryset(self):
         if self.request.method == 'GET':
             return User.objects.filter(role__gt=self.request.user.role).\
             annotate(full_name=Concat('first_name', Value(' '), 'last_name'))
         return super().get_queryset()
+
+    def get_serializer_class(self):
+        if self.request.user.role == ProfileRoles.CURATOR:
+            return UsersListForCuratorSerializer
+        return super().get_serializer_class()
