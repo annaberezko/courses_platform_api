@@ -6,6 +6,7 @@ from django.core import exceptions
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+from users.choices_types import ProfileRoles
 from users.models import InvitationToken
 
 User = get_user_model()
@@ -59,19 +60,27 @@ class CreateNewPasswordSerializer(serializers.Serializer):
         return attr
 
 
-class NewUserSerializer(serializers.Serializer):
-    email = serializers.EmailField(min_length=2, required=True)
-    first_name = serializers.CharField(required=False)
-    last_name = serializers.CharField(required=False)
+class UserSignUpSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validators.validate_password])
     confirm_password = serializers.CharField(write_only=True, required=True)
 
     class Meta:
+        model = User
         fields = ['email', 'first_name', 'last_name', 'password', 'confirm_password']
 
     def validate(self, attrs):
-        if User.objects.filter(email=attrs['email']).first():
-            raise serializers.ValidationError({'email': 'This email address is already used.'})
         if attrs['password'] != attrs['confirm_password']:
             raise serializers.ValidationError({'confirm_password': "Password fields didn't match."})
         return attrs
+
+
+class NewUserSerializer(UserSignUpSerializer):
+    full_name = serializers.CharField()
+    role = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'role', 'full_name', 'email', 'phone', 'google', 'facebook', 'last_login', 'date_joined', 'is_active']
+
+    def get_role(self, obj):
+        return dict(ProfileRoles.CHOICES)[obj.role]

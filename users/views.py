@@ -1,13 +1,17 @@
 from django.contrib.auth import get_user_model
+from django.db.models import F, Value
+from django.db.models.functions import Concat
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from courses_platform_api.permissions import IsSuperuserOrAdministrator
 from users.models import InvitationToken
 from users.serializers import TokenEmailObtainPairSerializer, RequestEmailSerializer, SecurityCodeSerializer, \
-    CreateNewPasswordSerializer, NewUserSerializer
+    CreateNewPasswordSerializer, NewUserSerializer, UserSignUpSerializer
 
 User = get_user_model()
 
@@ -63,12 +67,29 @@ class CreateNewPassword(generics.GenericAPIView):
         return Response({'email': serializer.validated_data['email']}, status=status.HTTP_200_OK)
 
 
-class UserSignUpAPIView(generics.ListCreateAPIView):
+class UserSignUpAPIView(generics.CreateAPIView):
     queryset = User.objects.all()
-    serializer_class = NewUserSerializer
+    serializer_class = UserSignUpSerializer
     permission_classes = (AllowAny, )
 
     def perform_create(self, serializer):
         user_data = dict(serializer.validated_data)
         del user_data['confirm_password']
         User.objects.create_user(**user_data)
+
+
+class UsersListAPIView(generics.ListCreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = NewUserSerializer
+    permission_classes = (IsSuperuserOrAdministrator, )
+
+    filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
+    ordering_fields = ['role', 'full_name', 'is_active']
+    ordering = ['role', 'full_name', 'is_active']
+    search_fields = ['full_name']
+
+    def get_queryset(self):
+        if self.request.method == 'GET':
+            return User.objects.filter(role__gt=self.request.user.role).\
+            annotate(full_name=Concat('first_name', Value(' '), 'last_name'))
+        return super().get_queryset()

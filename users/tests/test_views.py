@@ -231,6 +231,14 @@ class UserSignUpAPIViewTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(response.data['first_name'])
 
+    def test_create_user_profile_with_full_name(self):
+        self.data.update({'first_name': 'First name'})
+        self.data.update({'last_name': 'Last name'})
+        response = self.client.post(self.url, self.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(response.data['first_name'])
+        self.assertTrue(response.data['last_name'])
+
     def test_ensure_without_email_will_not_create_user_profile(self):
         self.data.pop('email')
         response = self.client.post(self.url, self.data)
@@ -253,4 +261,10 @@ class UserSignUpAPIViewTestCase(APITestCase):
         self.data['confirm_password'] = "12Jsirvm&*knv4_no"
         response = self.client.post(self.url, self.data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['confirm_password'][0], "Password fields didn't match.")
+
+    def test_user_already_exist_ensure_rase_validation_error(self):
+        response = self.client.post(self.url, self.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        response = self.client.post(self.url, self.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['email'][0], "user with this email address already exists.")
