@@ -38,9 +38,9 @@ class Permission(models.Model):
     When access=False, Administrator has limitation:
     can create only one course
     can't create curator (his previous curator get is_active=False)
-    can create only 5 learner
+    can see only 5 learner
 
-    Permission for Curator and Student:
+    Permission for Curator and Learner:
     if date_end is Null, permission unlimited
     giving accesses to different courses by course id
     """

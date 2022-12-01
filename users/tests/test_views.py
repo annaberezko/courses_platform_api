@@ -301,7 +301,7 @@ class UsersListAPIViewTestCase(APITestCase):
         response = client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_users_list_student_permission_no_access(self):
+    def test_users_list_learner_permission_no_access(self):
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user7@user.com', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
         response = self.client.get(self.url)
@@ -377,7 +377,7 @@ class RolesListAPIViewTestCase(APITestCase):
         response = client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_roles_list_student_permission_no_access(self):
+    def test_roles_list_learner_permission_no_access(self):
         client = APIClient()
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user4@user.com', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
