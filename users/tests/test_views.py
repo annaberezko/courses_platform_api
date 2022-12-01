@@ -1,11 +1,12 @@
 from django.contrib.auth import get_user_model
+from django.core import mail
 from django.urls import reverse
 from rest_framework import status
 
 from rest_framework.test import APITestCase, APIClient
 
 from users.choices_types import ProfileRoles
-from users.models import InvitationToken
+from users.models import InvitationToken, Lead
 
 User = get_user_model()
 
@@ -283,6 +284,18 @@ class UsersListAPIViewTestCase(APITestCase):
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
 
+        self.data = {
+            'email': 'user@user.user',
+            'password': '12Jsirvm&*knv4',
+            'confirm_password': '12Jsirvm&*knv4',
+            'role': 2,
+            'first_name': 'UserFirst',
+            'last_name': 'UserLast',
+            'phone': 777777777,
+            'instagram': 'googleaccaunt',
+            'facebook': 'facebookaccount',
+        }
+
     def test_users_list_unauthorized_permission_no_access(self):
         client = APIClient()
         response = client.get(self.url)
@@ -306,11 +319,12 @@ class UsersListAPIViewTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 7)
 
-    def test_list_curator_see_all_belows_roles(self):
+    def test_list_curator_see_all_belows_roles_and_dont_see_users_contact_data(self):
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user4@user.com', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse('phone' in response.data['results'][0])
         self.assertEqual(response.data['count'], 4)
 
     def test_users_list_ordering_by_fullname_desc(self):
@@ -320,3 +334,75 @@ class UsersListAPIViewTestCase(APITestCase):
         self.assertEqual(response.data['results'][1]['full_name'], "User Aaa")
         self.assertEqual(response.data['results'][2]['full_name'], "Bbb Aaa")
         self.assertEqual(response.data['results'][3]['full_name'], "Aaa Bbb")
+
+    def test_superuser_create_administrator_and_send_invitation_mail(self):
+        response = self.client.post(self.url, self.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_superuser_create_curator_and_send_invitation_mail(self):
+        self.data['role'] = 3
+        response = self.client.post(self.url, self.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_curator_permission_no_access_to_post_method(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user4@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.post(self.url, self.data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_administrator_create_curator_send_email_and_set_lead(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user2@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        self.data['role'] = 3
+        response = self.client.post(self.url, self.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertTrue(Lead.objects.filter(user__email=self.data['email'], lead=self.user2).exists())
+
+
+class RolesListAPIViewTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.url = reverse('v1.0:users:roles-list')
+        self.user = User.objects.create_superuser(email='super@super.super', password='strong')
+        self.user2 = User.objects.create_user(email='user2@user.com', password='strong', role=ProfileRoles.ADMINISTRATOR)
+        self.user3 = User.objects.create_user(email='user3@user.com', password='strong', role=ProfileRoles.CURATOR)
+        self.user4 = User.objects.create_user(email='user4@user.com', password='strong')
+        self.client = APIClient()
+
+    def test_roles_list_unauthorized_permission_no_access(self):
+        client = APIClient()
+        response = client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_roles_list_student_permission_no_access(self):
+        client = APIClient()
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user4@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_roles_list_curator_permission_no_access(self):
+        client = APIClient()
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user3@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_roles_list_superuser_see_all_roles_except_superuser(self):
+        client = APIClient()
+        res = client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
+        client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['roles_list']), 3)
+
+    def test_roles_list_administrator_see_below_roles(self):
+        client = APIClient()
+        res = client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user2@user.com', 'password': 'strong'})
+        client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['roles_list']), 2)

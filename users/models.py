@@ -18,9 +18,9 @@ class User(AbstractBaseUser):
     first_name = models.CharField('first name', max_length=50, null=True, blank=True)
     last_name = models.CharField('last name', max_length=50, null=True, blank=True)
     email = models.EmailField('email address', unique=True)
-    password = models.CharField('password', max_length=120)
+    password = models.CharField('password', max_length=120, null=True, blank=True)
     phone = models.CharField('phone number', max_length=20, null=True, blank=True)
-    google = models.CharField('google account', max_length=40, null=True, blank=True)
+    instagram = models.CharField('google account', max_length=40, null=True, blank=True)
     facebook = models.CharField('facebook account', max_length=40, null=True, blank=True)
     last_login = models.DateTimeField('last login date', auto_now_add=True)
     date_joined = models.DateTimeField('join date', auto_now_add=True)
@@ -36,6 +36,9 @@ class User(AbstractBaseUser):
     def generate_security_code(self, length=6):
         return ''.join(random.sample(digits, length))
 
+    def set_lead(self, lead):
+        Lead.objects.create(user=self, lead=lead)
+
     def send_security_code(self):
         self.security_code = self.generate_security_code()
         self.save()
@@ -50,6 +53,21 @@ class User(AbstractBaseUser):
         message = strip_tags(html)
         send_mail(subject, message, EMAIL_HOST_USER, [self.email], html_message=html)
 
+    def send_invitation_link(self):
+        token = InvitationToken.objects.create(user_id=self.id)
+
+        context = {
+            'first_name': self.first_name,
+            'second_name': self.last_name,
+            'link_url': FRONT_END_NEW_PASSWORD_URL + '?token=' + str(token)
+        }
+
+        subject = 'Invitation to Courses Platform password creation'
+        html = render_to_string('invitation_to_courses_platform.html', context=context)
+        message = strip_tags(html)
+
+        send_mail(subject, message, EMAIL_HOST_USER, [self.email], html_message=html)
+
     def __str__(self):
         return self.get_full_name()
 
@@ -58,22 +76,6 @@ class InvitationToken(Token):
     type = models.CharField(max_length=20, default="invitation")
 
 
-class AdministratorAccess(models.Model):
-    """
-    When access=False, Administrator has limitation:
-    can create only one course
-    can't create curator (his previous curator get is_active=False)
-    can create only 5 learner
-    """
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    date_start = models.DateField(auto_now_add=True)
-    date_end = models.DateField(null=True, blank=True)
-    access = models.BooleanField('access', default=False)
-
-    def inactivate_user(self):
-        self.access = False
-        self.save(update_fields=['access'])
-
-    def activate_user(self):
-        self.access = True
-        self.save(update_fields=['access'])
+class Lead(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user')
+    lead = models.ForeignKey(User, on_delete=models.CASCADE, related_name='lead')
