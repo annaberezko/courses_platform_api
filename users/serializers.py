@@ -74,13 +74,21 @@ class UserSignUpSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class CreateUserSerializer(serializers.ModelSerializer):
+    curator_lead = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['role', 'first_name', 'last_name', 'email', 'phone', 'instagram', 'facebook', 'curator_lead']
+
+
 class UsersListSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField()
     role = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['id', 'role', 'full_name', 'email', 'phone', 'google', 'facebook', 'last_login', 'date_joined']
+        fields = ['id', 'role', 'full_name', 'email', 'phone', 'instagram', 'facebook', 'last_login', 'date_joined']
 
     def get_role(self, obj):
         return dict(ProfileRoles.CHOICES)[obj.role]

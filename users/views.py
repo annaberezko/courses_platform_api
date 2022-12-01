@@ -5,13 +5,16 @@ from rest_framework import generics, status
 from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from courses_platform_api.permissions import IsSuperuserOrAdministratorOrCurator
+from courses_platform_api.permissions import IsSuperuserOrAdministratorReadWriteOrCuratorReadOnly, \
+    IsSuperuserOrAdministrator
 from users.choices_types import ProfileRoles
 from users.models import InvitationToken
 from users.serializers import TokenEmailObtainPairSerializer, RequestEmailSerializer, SecurityCodeSerializer, \
-    UserSignUpSerializer, UsersListSerializer, RecoveryPasswordSerializer, UsersListForCuratorSerializer
+    UserSignUpSerializer, UsersListSerializer, RecoveryPasswordSerializer, UsersListForCuratorSerializer, \
+    CreateUserSerializer
 
 User = get_user_model()
 
@@ -80,8 +83,7 @@ class UserSignUpAPIView(generics.CreateAPIView):
 
 class UsersListAPIView(generics.ListCreateAPIView):
     queryset = User.objects.all()
-    serializer_class = UsersListSerializer
-    permission_classes = (IsSuperuserOrAdministratorOrCurator, )
+    permission_classes = (IsSuperuserOrAdministratorReadWriteOrCuratorReadOnly, )
 
     filter_backends = [OrderingFilter]
     ordering_fields = ['role', 'full_name']
@@ -94,6 +96,24 @@ class UsersListAPIView(generics.ListCreateAPIView):
         return super().get_queryset()
 
     def get_serializer_class(self):
-        if self.request.user.role == ProfileRoles.CURATOR:
-            return UsersListForCuratorSerializer
-        return super().get_serializer_class()
+        if self.request.method == 'GET':
+            if self.request.user.role == ProfileRoles.CURATOR:
+                return UsersListForCuratorSerializer
+            return UsersListSerializer
+        return CreateUserSerializer
+
+    def perform_create(self, serializer):
+        user = User.objects.create_user(**serializer.validated_data)
+        user.set_lead(self.request.user)
+        if serializer.validated_data['role'] in (ProfileRoles.ADMINISTRATOR, ProfileRoles.CURATOR):
+            user.send_invitation_link()
+
+
+class RolesListAPIView(APIView):
+    permission_classes = (IsSuperuserOrAdministrator, )
+
+    def get(self, request, *args, **kwargs):
+        role = request.user.role
+        roles_list = [{'id': role_key, 'name': role_name} for role_key, role_name in ProfileRoles.CHOICES
+                      if role_key > role]
+        return Response({'roles_list': roles_list}, status=status.HTTP_200_OK)
