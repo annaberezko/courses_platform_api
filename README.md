@@ -1,22 +1,21 @@
 # Platform for educational courses
 
 ### Superuser 
-#### Administrate all users and data, can create administrators and curators
+Administrate all users and data, can create administrators and curators
 ### Administrator 
-#### Can create courses, curators, administrate them, and see his learners
-#### When permission access=False, Administrator has limitation:
+Can create courses, curators, administrate them, and see his learners
+When permission access=False, Administrator has limitation:
 * Can create only one course
 * Can't create curator (his previous curator get is_active=False)
 * Can see only 5 learner
 ### Curator 
-#### Has permission to review his courses, learners with access to these courses without contact information, and check home tasks
+Has permission to review his courses, learners with access to these courses without contact information, and check home tasks
 ### Learner 
-#### Can sign up, has permission to review his courses and do home tasks to them
-###
-#### Permission for Curator and Learner:
+Can sign up, has permission to review his courses and do home tasks to them
+
+Permission for Curator and Learner:
 * If date_end is Null, permission unlimited
 * Giving accesses to different courses by course id
-
 
 ## Tech details
 
