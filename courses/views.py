@@ -1,3 +1,7 @@
-from django.shortcuts import render
+from rest_framework import generics
 
-# Create your views here.
+from courses.models import Course
+
+
+class CoursesListAPIView(generics.ListCreateAPIView):
+    queryset = Course.objects.all()

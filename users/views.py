@@ -1,8 +1,10 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Value
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db.models import Value, Q, Case, When
 from django.db.models.functions import Concat
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status
-from rest_framework.filters import OrderingFilter
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -11,10 +13,10 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from courses_platform_api.permissions import IsSuperuserOrAdministratorReadWriteOrCuratorReadOnly, \
     IsSuperuserOrAdministrator
 from users.choices_types import ProfileRoles
-from users.models import InvitationToken
+from users.models import InvitationToken, Lead
 from users.serializers import TokenEmailObtainPairSerializer, RequestEmailSerializer, SecurityCodeSerializer, \
     UserSignUpSerializer, UsersListSerializer, RecoveryPasswordSerializer, UsersListForCuratorSerializer, \
-    CreateUserSerializer
+    CreateUserSerializer, UserSerializer
 
 User = get_user_model()
 
@@ -85,14 +87,31 @@ class UsersListAPIView(generics.ListCreateAPIView):
     queryset = User.objects.all()
     permission_classes = (IsSuperuserOrAdministratorReadWriteOrCuratorReadOnly, )
 
-    filter_backends = [OrderingFilter]
-    ordering_fields = ['role', 'full_name']
-    ordering = ['role', 'full_name']
+    filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
+
+    ordering_fields = ['role', 'courses', 'full_name']
+    ordering = ['role', 'courses', 'full_name']
 
     def get_queryset(self):
         if self.request.method == 'GET':
-            return User.objects.filter(role__gt=self.request.user.role).\
-            annotate(full_name=Concat('first_name', Value(' '), 'last_name'))
+            role = self.request.user.role
+            pk = self.request.user.id
+            default_values = ['id', 'role', 'email', 'phone', 'instagram', 'facebook', 'last_login', 'date_joined']
+            annotation = {
+                "full_name": Concat('first_name', Value(' '), 'last_name'),
+                "courses": ArrayAgg('permission__course__name', distinct=True)
+            }
+
+            if role == ProfileRoles.ADMINISTRATOR:
+                return User.objects.values(*default_values).annotate(**annotation).\
+                    filter(Q(curators__lead_id=pk) | Q(permission__course__user_id=pk))
+
+            elif role == ProfileRoles.CURATOR:
+                admin_list = Lead.objects.values_list('lead_id').filter(user_id=pk)
+                return User.objects.values('id', 'role', 'last_login', 'date_joined').annotate(**annotation).\
+                    filter(permission__access=True, permission__course__user_id__in=admin_list)
+
+            return User.objects.values(*default_values).annotate(**annotation).filter(role__gt=role)
         return super().get_queryset()
 
     def get_serializer_class(self):
@@ -107,6 +126,22 @@ class UsersListAPIView(generics.ListCreateAPIView):
         user.set_lead(self.request.user)
         if serializer.validated_data['role'] in (ProfileRoles.ADMINISTRATOR, ProfileRoles.CURATOR):
             user.send_invitation_link()
+
+
+class UserAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = User.objects.all()
+    permission_classes = (IsSuperuserOrAdministratorReadWriteOrCuratorReadOnly, )
+
+    def get_serializer_class(self):
+        if self.request.user.role == ProfileRoles.CURATOR:
+            return UsersListForCuratorSerializer
+        return UserSerializer
+
+    def get_serializer_class(self):
+        if self.request.user.role == ProfileRoles.CURATOR:
+            pk = self.kwargs['pk']
+            return User.objects.filter(pk=pk).annotate(full_name=Concat('first_name', Value(' '), 'last_name'))
+        return super().get_queryset()
 
 
 class RolesListAPIView(APIView):

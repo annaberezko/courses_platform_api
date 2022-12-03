@@ -83,18 +83,26 @@ class CreateUserSerializer(serializers.ModelSerializer):
 
 
 class UsersListSerializer(serializers.ModelSerializer):
-    full_name = serializers.CharField()
     role = serializers.SerializerMethodField()
+    full_name = serializers.CharField()
+    courses = serializers.CharField()
 
     class Meta:
         model = User
-        fields = ['id', 'role', 'full_name', 'email', 'phone', 'instagram', 'facebook', 'last_login', 'date_joined']
+        fields = ['id', 'role', 'full_name', 'email', 'phone', 'instagram', 'facebook', 'last_login', 'date_joined', 'courses']
 
     def get_role(self, obj):
-        return dict(ProfileRoles.CHOICES)[obj.role]
+        role = obj['role'] if type(obj) is dict else obj.role
+        return dict(ProfileRoles.CHOICES)[role]
 
 
 class UsersListForCuratorSerializer(UsersListSerializer):
     class Meta(UsersListSerializer.Meta):
+        fields = ['id', 'role', 'full_name', 'last_login', 'date_joined', 'courses']
+
+
+class UserSerializer(serializers.ModelSerializer):
+    last_login = serializers.DateTimeField(read_only=True)
+    class Meta:
         model = User
-        fields = ['id', 'role', 'full_name', 'last_login', 'date_joined']
+        exclude = ['password', 'date_joined', 'security_code']
