@@ -33,17 +33,6 @@ class Course(models.Model):
 
 
 class Permission(models.Model):
-    """
-    Permission for Administrator:
-    When access=False, Administrator has limitation:
-    can create only one course
-    can't create curator (his previous curator get is_active=False)
-    can see only 5 learner
-
-    Permission for Curator and Learner:
-    if date_end is Null, permission unlimited
-    giving accesses to different courses by course id
-    """
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     date_start = models.DateField(auto_now_add=True)
