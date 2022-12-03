@@ -3,6 +3,12 @@ from rest_framework.permissions import IsAuthenticated, SAFE_METHODS
 from users.choices_types import ProfileRoles
 
 
+class IsSuperuser(IsAuthenticated):
+    def has_permission(self, request, view):
+        perm = super().has_permission(request, view)
+        return bool(perm and request.user.role == ProfileRoles.SUPERUSER)
+
+
 class IsSuperuserOrAdministrator(IsAuthenticated):
     def has_permission(self, request, view):
         perm = super().has_permission(request, view)
@@ -22,7 +28,7 @@ class IsSuperuserOrAdministratorOrCurator(IsAuthenticated):
         ))
 
 
-class IsSuperuserOrAdministratorReadWriteOrCuratorReadOnly(IsAuthenticated):
+class IsSuperuserOrAdministratorAllOrCuratorReadOnly(IsAuthenticated):
     def has_permission(self, request, view):
         perm = super().has_permission(request, view)
         return bool(perm and (request.user.role in (ProfileRoles.SUPERUSER, ProfileRoles.ADMINISTRATOR) or

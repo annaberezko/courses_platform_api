@@ -281,12 +281,12 @@ class UsersListAPIViewTestCase(APITestCase):
         self.user8 = User.objects.create_user(email='user8@user.com', password='strong', first_name="User", last_name="Bbb")
         self.user9 = User.objects.create_user(email='user9@user.com', password='strong', first_name="Aaa", last_name="Bbb")
         self.user10 = User.objects.create_user(email='user10@user.com', password='strong', first_name="Bbb", last_name="Aaa")
-        self.course1 = Course.objects.create(user=self.user2, name="Course 1")
+        self.course1 = Course.objects.create(admin=self.user2, name="Course 1")
         self.lead1 = Lead.objects.create(user=self.user4, lead=self.user2)
         self.permission1 = Permission.objects.create(user=self.user7, course=self.course1, access=True)
         self.permission2 = Permission.objects.create(user=self.user8, course=self.course1)
-        self.course2 = Course.objects.create(user=self.user3, name="Course 2")
-        self.course3 = Course.objects.create(user=self.user3, name="Course 3")
+        self.course2 = Course.objects.create(admin=self.user3, name="Course 2")
+        self.course3 = Course.objects.create(admin=self.user3, name="Course 3")
         self.lead2 = Lead.objects.create(user=self.user5, lead=self.user3)
         self.lead3 = Lead.objects.create(user=self.user6, lead=self.user3)
         self.permission3 = Permission.objects.create(user=self.user7, course=self.course2)
@@ -294,7 +294,7 @@ class UsersListAPIViewTestCase(APITestCase):
         self.permission5 = Permission.objects.create(user=self.user8, course=self.course3)
         self.permission6 = Permission.objects.create(user=self.user9, course=self.course2)
         self.permission6 = Permission.objects.create(user=self.user10, course=self.course2)
-        self.client = APIClient()
+
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
 
@@ -430,3 +430,34 @@ class RolesListAPIViewTestCase(APITestCase):
         response = client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['roles_list']), 2)
+
+
+class AdministratorsListAPIViewTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.url = reverse('v1.0:users:administrators-list')
+        self.user = User.objects.create_superuser(email='super@super.super', password='strong')
+        self.user1 = User.objects.create_user(email='user1@user.com', password='strong', role=ProfileRoles.ADMINISTRATOR)
+        self.user2 = User.objects.create_user(email='user2@user.com', password='strong', role=ProfileRoles.ADMINISTRATOR)
+        self.user3 = User.objects.create_user(email='user3@user.com', password='strong', role=ProfileRoles.ADMINISTRATOR)
+        self.user4 = User.objects.create_user(email='user4@user.com', password='strong', role=ProfileRoles.CURATOR)
+        self.user5 = User.objects.create_user(email='user5@user.com', password='strong', role=ProfileRoles.CURATOR)
+        self.user6 = User.objects.create_user(email='user6@user.com', password='strong')
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        self.response = self.client.get(self.url)
+
+    def test_administrators_list_unauthorized_permission_no_access(self):
+        client = APIClient()
+        response = client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_administrators_list_administrator_permission_no_access(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user1@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_administrators_list(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

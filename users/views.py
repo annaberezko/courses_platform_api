@@ -9,8 +9,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from courses_platform_api.permissions import IsSuperuserOrAdministratorReadWriteOrCuratorReadOnly, \
-    IsSuperuserOrAdministrator
+from courses_platform_api.permissions import IsSuperuserOrAdministratorAllOrCuratorReadOnly, \
+    IsSuperuserOrAdministrator, IsSuperuser
 from users.choices_types import ProfileRoles
 from users.models import InvitationToken, Lead
 from users.serializers import TokenEmailObtainPairSerializer, RequestEmailSerializer, SecurityCodeSerializer, \
@@ -84,10 +84,9 @@ class UserSignUpAPIView(generics.CreateAPIView):
 
 class UsersListAPIView(generics.ListCreateAPIView):
     queryset = User.objects.all()
-    permission_classes = (IsSuperuserOrAdministratorReadWriteOrCuratorReadOnly, )
+    permission_classes = (IsSuperuserOrAdministratorAllOrCuratorReadOnly, )
 
     filter_backends = [OrderingFilter]
-
     ordering_fields = ['role', 'courses', 'full_name']
     ordering = ['role', 'courses', 'full_name']
 
@@ -103,14 +102,14 @@ class UsersListAPIView(generics.ListCreateAPIView):
 
             if role == ProfileRoles.ADMINISTRATOR:
                 return User.objects.values(*default_values).annotate(**annotation).\
-                    filter(Q(curators__lead_id=pk) | Q(permission__course__user_id=pk))
+                    filter(Q(curators__lead_id=pk) | Q(permission__course__admin_id=pk))
 
             elif role == ProfileRoles.CURATOR:
                 admin_list = Lead.objects.values_list('lead_id').filter(user_id=pk)
                 return User.objects.values('id', 'role', 'last_login', 'date_joined').annotate(**annotation).\
-                    filter(permission__access=True, permission__course__user_id__in=admin_list)
+                    filter(permission__access=True, permission__course__admin_id__in=admin_list)
 
-            return User.objects.values(*default_values).annotate(**annotation).filter(role__gt=role)
+            return User.objects.values(*default_values).annotate(**annotation).exclude(role=ProfileRoles.SUPERUSER)
         return super().get_queryset()
 
     def get_serializer_class(self):
@@ -129,7 +128,7 @@ class UsersListAPIView(generics.ListCreateAPIView):
 
 class UserAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
-    permission_classes = (IsSuperuserOrAdministratorReadWriteOrCuratorReadOnly, )
+    permission_classes = (IsSuperuserOrAdministratorAllOrCuratorReadOnly, )
 
     def get_serializer_class(self):
         if self.request.user.role == ProfileRoles.CURATOR:
@@ -151,3 +150,12 @@ class RolesListAPIView(APIView):
         roles_list = [{'id': role_key, 'name': role_name} for role_key, role_name in ProfileRoles.CHOICES
                       if role_key > role]
         return Response({'roles_list': roles_list}, status=status.HTTP_200_OK)
+
+
+class AdministratorsListAPIView(APIView):
+    permission_classes = (IsSuperuser, )
+
+    def get(self, request, *args, **kwargs):
+        administrators = User.objects.values('id').annotate(full_name=Concat('first_name', Value(' '), 'last_name')).\
+            filter(role=ProfileRoles.ADMINISTRATOR)
+        return Response({'data': list(administrators)}, status=status.HTTP_200_OK)
