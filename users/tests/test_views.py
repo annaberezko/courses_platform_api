@@ -5,6 +5,7 @@ from rest_framework import status
 
 from rest_framework.test import APITestCase, APIClient
 
+from courses.models import Course, Permission
 from users.choices_types import ProfileRoles
 from users.models import InvitationToken, Lead
 
@@ -280,6 +281,19 @@ class UsersListAPIViewTestCase(APITestCase):
         self.user8 = User.objects.create_user(email='user8@user.com', password='strong', first_name="User", last_name="Bbb")
         self.user9 = User.objects.create_user(email='user9@user.com', password='strong', first_name="Aaa", last_name="Bbb")
         self.user10 = User.objects.create_user(email='user10@user.com', password='strong', first_name="Bbb", last_name="Aaa")
+        self.course1 = Course.objects.create(user=self.user2, name="Course 1", sequence=False)
+        self.lead1 = Lead.objects.create(user=self.user4, lead=self.user2)
+        self.permission1 = Permission.objects.create(user=self.user7, course=self.course1)
+        self.permission2 = Permission.objects.create(user=self.user8, course=self.course1)
+        self.course2 = Course.objects.create(user=self.user3, name="Course 2", sequence=False)
+        self.course3 = Course.objects.create(user=self.user3, name="Course 3", sequence=False)
+        self.lead2 = Lead.objects.create(user=self.user5, lead=self.user3)
+        self.lead3 = Lead.objects.create(user=self.user6, lead=self.user3)
+        self.permission3 = Permission.objects.create(user=self.user7, course=self.course2)
+        self.permission4 = Permission.objects.create(user=self.user7, course=self.course2)
+        self.permission5 = Permission.objects.create(user=self.user8, course=self.course3)
+        self.permission6 = Permission.objects.create(user=self.user9, course=self.course2)
+        self.permission6 = Permission.objects.create(user=self.user10, course=self.course2)
         self.client = APIClient()
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
@@ -311,13 +325,22 @@ class UsersListAPIViewTestCase(APITestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 9)
+        self.assertTrue(type(response.data['results'][0]['role']) is str)
 
-    def test_list_administrator_see_all_belows_roles(self):
+    def test_list_administrator_see_his_curator_and_learner(self):
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user2@user.com', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['count'], 7)
+        self.assertEqual(response.data['count'], 3)
+
+    def test_list_administrator_see_his_curators_and_learner_when_few_curators_and_courses(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user3@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 6)
+        self.assertTrue(type(response.data['results'][0]['role']) is str)
 
     def test_list_curator_see_all_belows_roles_and_dont_see_users_contact_data(self):
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user4@user.com', 'password': 'strong'})
@@ -325,7 +348,8 @@ class UsersListAPIViewTestCase(APITestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse('phone' in response.data['results'][0])
-        self.assertEqual(response.data['count'], 4)
+        self.assertEqual(response.data['count'], 2)
+        self.assertTrue(type(response.data['results'][0]['role']) is str)
 
     def test_users_list_ordering_by_fullname_desc(self):
         response = self.client.get(self.url + '?ordering=-full_name')

@@ -77,5 +77,5 @@ class InvitationToken(Token):
 
 
 class Lead(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user')
-    lead = models.ForeignKey(User, on_delete=models.CASCADE, related_name='lead')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='curators')
+    lead = models.ForeignKey(User, on_delete=models.CASCADE, related_name='administrators')
