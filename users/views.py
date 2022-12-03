@@ -1,10 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.aggregates import ArrayAgg
-from django.db.models import Value, Q, Case, When
+from django.db.models import Value, Q
 from django.db.models.functions import Concat
-from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status
-from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -87,7 +86,7 @@ class UsersListAPIView(generics.ListCreateAPIView):
     queryset = User.objects.all()
     permission_classes = (IsSuperuserOrAdministratorReadWriteOrCuratorReadOnly, )
 
-    filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
+    filter_backends = [OrderingFilter]
 
     ordering_fields = ['role', 'courses', 'full_name']
     ordering = ['role', 'courses', 'full_name']
