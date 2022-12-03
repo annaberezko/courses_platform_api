@@ -1,9 +1,13 @@
 # Platform for educational courses
 
-### Superuser administrate all users and data, can create administrators and curators
-### Admin can create courses, curators, administrate them, and see his learners
-### Curator has permission to review his courses, learners with access to these courses without contact information, and check home tasks
-### Learner can sign up, has permission to review his courses and do home tasks to them
+### Superuser 
+#### Administrate all users and data, can create administrators and curators
+### Administrator 
+#### Can create courses, curators, administrate them, and see his learners
+### Curator 
+#### Has permission to review his courses, learners with access to these courses without contact information, and check home tasks
+### Learner 
+#### Can sign up, has permission to review his courses and do home tasks to them
 
 ## Tech details
 
