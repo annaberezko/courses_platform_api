@@ -110,7 +110,7 @@ class UsersListAPIView(generics.ListCreateAPIView):
                 return User.objects.values('id', 'role', 'last_login', 'date_joined').annotate(**annotation).\
                     filter(permission__access=True, permission__course__user_id__in=admin_list)
 
-            return User.objects.values(*default_values).annotate(**annotation).filter(role__gt=role)
+            return User.objects.values(*default_values).annotate(**annotation).exclude(role=ProfileRoles.SUPERUSER)
         return super().get_queryset()
 
     def get_serializer_class(self):
