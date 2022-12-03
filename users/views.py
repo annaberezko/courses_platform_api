@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.aggregates import ArrayAgg
-from django.db.models import Value, Q
+from django.db.models import Value, Q, Case, When
 from django.db.models.functions import Concat
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status
@@ -95,20 +95,23 @@ class UsersListAPIView(generics.ListCreateAPIView):
     def get_queryset(self):
         if self.request.method == 'GET':
             role = self.request.user.role
-            if role in (2, 3):
-                pk = self.request.user.id
-                admin = pk if role == 2 else Lead.objects.values_list('lead_id').filter(user_id=pk)[0][0]
-                queryset = User.objects.\
-                    values('id', 'role', 'email', 'phone', 'instagram', 'facebook', 'last_login', 'date_joined').\
-                    filter(Q(role__gt=role) & Q(curators__lead_id=admin) | Q(permission__course__user_id=admin)).\
-                    annotate(full_name=Concat('first_name', Value(' '), 'last_name'),
-                             courses=ArrayAgg('permission__course__name', distinct=True))
-                return queryset
-            else:
-                return User.objects.filter(role__gt=role).annotate(
-                    full_name=Concat('first_name', Value(' '), 'last_name'),
-                    courses=ArrayAgg('permission__course__name', distinct=True)
-                )
+            pk = self.request.user.id
+            default_values = ['id', 'role', 'email', 'phone', 'instagram', 'facebook', 'last_login', 'date_joined']
+            annotation = {
+                "full_name": Concat('first_name', Value(' '), 'last_name'),
+                "courses": ArrayAgg('permission__course__name', distinct=True)
+            }
+
+            if role == ProfileRoles.ADMINISTRATOR:
+                return User.objects.values(*default_values).annotate(**annotation).\
+                    filter(Q(curators__lead_id=pk) | Q(permission__course__user_id=pk))
+
+            elif role == ProfileRoles.CURATOR:
+                admin_list = Lead.objects.values_list('lead_id').filter(user_id=pk)
+                return User.objects.values('id', 'role', 'last_login', 'date_joined').annotate(**annotation).\
+                    filter(permission__access=True, permission__course__user_id__in=admin_list)
+
+            return User.objects.values(*default_values).annotate(**annotation).filter(role__gt=role)
         return super().get_queryset()
 
     def get_serializer_class(self):
