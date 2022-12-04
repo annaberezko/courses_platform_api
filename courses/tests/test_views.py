@@ -3,7 +3,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
 
-from courses.models import Course
+from courses.models import Course, Permission
 from users.choices_types import ProfileRoles
 from users.models import Lead
 
@@ -21,6 +21,7 @@ class CoursesListAPIViewTestCase(APITestCase):
         self.user4 = User.objects.create_user(email='user4@user.com', password='strong', role=ProfileRoles.CURATOR)
         self.user5 = User.objects.create_user(email='user5@user.com', password='strong', role=ProfileRoles.CURATOR)
         self.user6 = User.objects.create_user(email='user6@user.com', password='strong')
+        self.permission = Permission.objects.create(user=self.user1, access=True)
         self.lead1 = Lead.objects.create(user=self.user4, lead=self.user1)
         self.lead2 = Lead.objects.create(user=self.user5, lead=self.user1)
         self.lead3 = Lead.objects.create(user=self.user5, lead=self.user2)
@@ -103,9 +104,65 @@ class CoursesListAPIViewTestCase(APITestCase):
         response = self.client.post(self.url, self.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    def test_administrator_create_new_course(self):
+    def test_superuser_create_new_course_with_all_data(self):
+        self.data.update({
+            'admin': self.user3.id,
+            'cover': "",
+            'description': 'Course description',
+            'sequence': True
+        })
+        response = self.client.post(self.url, self.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_administrator_create_many_courses_if_he_is_active(self):
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user1@user.com', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
         self.data.update({'admin': self.user1.id})
         response = self.client.post(self.url, self.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        response = self.client.post(self.url, self.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_administrator_create_only_one_course_if_he_is_not_active(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user3@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        self.data.update({'admin': self.user3.id})
+        response = self.client.post(self.url, self.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        response = self.client.post(self.url, self.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class CourseAPIViewAPIViewTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.url = reverse('v1.0:courses:courses-list')
+        self.user = User.objects.create_superuser(email='super@super.super', password='strong')
+        self.user1 = User.objects.create_user(email='user1@user.com', password='strong', role=ProfileRoles.ADMINISTRATOR)
+        self.user2 = User.objects.create_user(email='user2@user.com', password='strong', role=ProfileRoles.ADMINISTRATOR)
+        self.user3 = User.objects.create_user(email='user3@user.com', password='strong', role=ProfileRoles.ADMINISTRATOR)
+        self.user4 = User.objects.create_user(email='user4@user.com', password='strong', role=ProfileRoles.CURATOR)
+        self.user5 = User.objects.create_user(email='user5@user.com', password='strong', role=ProfileRoles.CURATOR)
+        self.user6 = User.objects.create_user(email='user6@user.com', password='strong')
+        self.lead1 = Lead.objects.create(user=self.user4, lead=self.user1)
+        self.lead2 = Lead.objects.create(user=self.user5, lead=self.user1)
+        self.lead3 = Lead.objects.create(user=self.user5, lead=self.user2)
+        self.course1 = Course.objects.create(admin=self.user1, name="Course 1")
+        self.course2 = Course.objects.create(admin=self.user2, name="Course 2")
+        self.course3 = Course.objects.create(admin=self.user1, name="Course 3")
+        self.course4 = Course.objects.create(admin=self.user1, name="Course 4")
+
+        self.data = {
+            'name': 'New Course'
+        }
+
+    def test_course_detail_page_unauthorized_permission_no_access(self):
+        client = APIClient()
+        response = client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_course_detail_page_learner_permission_no_access(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user6@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

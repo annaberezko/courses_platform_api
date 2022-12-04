@@ -1,12 +1,16 @@
+from django.contrib.auth import get_user_model
 from django.db.models import Value
 from django.db.models.functions import Concat
-from rest_framework import generics
+from rest_framework import generics, status
+from rest_framework.response import Response
 
-from courses.models import Course
+from courses.models import Course, Permission
 from courses.serializers import CoursesListSerializer, CourseSerializer
 from courses_platform_api.permissions import IsSuperuserOrAdministratorAllOrCuratorReadOnly
 from users.choices_types import ProfileRoles
 from users.models import Lead
+
+User = get_user_model()
 
 
 class CoursesListAPIView(generics.ListCreateAPIView):
@@ -30,6 +34,21 @@ class CoursesListAPIView(generics.ListCreateAPIView):
         if self.request.method == 'GET':
             return CoursesListSerializer
         return super().get_serializer_class()
+
+    def permission_for_creation(self):
+        if Permission.objects.filter(user=self.request.user, access=True).exists():
+            return True
+        return not Course.objects.filter(admin=self.request.user).count()
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        if self.request.user.role == ProfileRoles.ADMINISTRATOR and not self.permission_for_creation():
+            return Response({'error': 'You can create only one course'}, status=status.HTTP_400_BAD_REQUEST)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
 
 class CourseAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Course.objects.all()

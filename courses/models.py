@@ -34,7 +34,7 @@ class Course(models.Model):
 
 class Permission(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, null=True, blank=True)
     date_start = models.DateField(auto_now_add=True)
     date_end = models.DateField(null=True, blank=True)
     access = models.BooleanField('is active', default=False)
