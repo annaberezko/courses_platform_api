@@ -102,7 +102,7 @@ class UsersListAPIView(generics.ListCreateAPIView):
 
             if role == ProfileRoles.ADMINISTRATOR:
                 return User.objects.values(*default_values).annotate(**annotation).\
-                    filter(Q(curators__lead_id=pk) | Q(permission__course__admin_id=pk))
+                    filter(Q(users__lead_id=pk) | Q(permission__course__admin_id=pk))
 
             elif role == ProfileRoles.CURATOR:
                 admin_list = Lead.objects.values_list('lead_id').filter(user_id=pk)

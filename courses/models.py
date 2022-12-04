@@ -13,7 +13,7 @@ class Course(models.Model):
     def file_path(self, filename):
         return "%s/courses/%s/%s" % (self.admin, self.id, filename)
 
-    admin = models.ForeignKey(User, on_delete=models.CASCADE)
+    admin = models.ForeignKey(User, on_delete=models.CASCADE, related_name='courses')
     name = models.CharField('course name', max_length=40)
     cover = ProcessedImageField(
         validators=[FileExtensionValidator(VALID_EXTENSIONS)],
