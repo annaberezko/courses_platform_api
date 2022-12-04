@@ -30,6 +30,7 @@ class Course(models.Model):
     )
     description = models.TextField('description', null=True, blank=True)
     sequence = models.BooleanField('sequence tasks', default=False)
+    access = models.BooleanField('is active', default=True)
 
 
 class Permission(models.Model):

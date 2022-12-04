@@ -6,7 +6,8 @@ from rest_framework.response import Response
 
 from courses.models import Course, Permission
 from courses.serializers import CoursesListSerializer, CourseSerializer
-from courses_platform_api.permissions import IsSuperuserOrAdministratorAllOrCuratorReadOnly
+from courses_platform_api.permissions import IsSuperuserOrAdministratorAllOrCuratorReadOnly, \
+    IsSuperuserOrAdministratorWithCourseAccessAllOrCuratorWithCourseAccessReadOnly
 from users.choices_types import ProfileRoles
 from users.models import Lead
 
@@ -26,7 +27,7 @@ class CoursesListAPIView(generics.ListCreateAPIView):
                 annotate(admin=Concat('admin__first_name', Value(' '), 'admin__last_name')).distinct()
             if role == ProfileRoles.CURATOR:
                 admin_list = Lead.objects.values_list('lead_id').filter(user_id=pk)
-                return queryset.filter(admin_id__in=admin_list)
+                return queryset.filter(admin_id__in=admin_list, access=True)
             return queryset.filter(admin_id=pk) if role == ProfileRoles.ADMINISTRATOR else queryset
         return super().get_queryset()
 
@@ -52,5 +53,5 @@ class CoursesListAPIView(generics.ListCreateAPIView):
 
 class CourseAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Course.objects.all()
-    permission_classes = (IsSuperuserOrAdministratorAllOrCuratorReadOnly, )
-    serializer_class = CoursesListSerializer
+    permission_classes = (IsSuperuserOrAdministratorWithCourseAccessAllOrCuratorWithCourseAccessReadOnly, )
+    serializer_class = CourseSerializer
