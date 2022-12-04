@@ -11,9 +11,9 @@ User = get_user_model()
 
 class Course(models.Model):
     def file_path(self, filename):
-        return "%s/courses/%s/%s" % (self.user, self.id, filename)
+        return "%s/courses/%s/%s" % (self.admin, self.id, filename)
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    admin = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField('course name', max_length=40)
     cover = ProcessedImageField(
         validators=[FileExtensionValidator(VALID_EXTENSIONS)],
@@ -30,11 +30,12 @@ class Course(models.Model):
     )
     description = models.TextField('description', null=True, blank=True)
     sequence = models.BooleanField('sequence tasks', default=False)
+    access = models.BooleanField('is active', default=True)
 
 
 class Permission(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, null=True, blank=True)
     date_start = models.DateField(auto_now_add=True)
     date_end = models.DateField(null=True, blank=True)
     access = models.BooleanField('is active', default=False)
