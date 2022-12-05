@@ -334,7 +334,15 @@ class UsersListAPIViewTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 3)
 
-    def test_list_administrator_see_his_curators_and_learner_when_few_curators_and_courses(self):
+    def test_list_administrator_with_access_see_his_curators_and_learner(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user3@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 5)
+
+    def test_list_administrator_without_access_see_only_five_curators_and_courses(self):
+        self.assess = Permission.objects.create(user=self.user3, access=True)
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user3@user.com', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
         response = self.client.get(self.url)
@@ -343,6 +351,7 @@ class UsersListAPIViewTestCase(APITestCase):
         self.assertTrue(type(response.data['results'][0]['role']) is str)
 
     def test_list_curator_see_all_belows_roles_and_dont_see_users_contact_data(self):
+        self.assess = Permission.objects.create(user=self.user2, access=True)
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user4@user.com', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
         response = self.client.get(self.url)
@@ -350,6 +359,24 @@ class UsersListAPIViewTestCase(APITestCase):
         self.assertFalse('phone' in response.data['results'][0])
         self.assertEqual(response.data['count'], 1)
         self.assertTrue(type(response.data['results'][0]['role']) is str)
+
+    def test_list_curator_see_all_his_accesses_admin_members_list(self):
+        self.assess = Permission.objects.create(user=self.user3, access=True)
+        self.lead1 = Lead.objects.create(user=self.user4, lead=self.user3)
+        Permission.objects.filter(user=self.user7, course=self.course2).update(access=True)
+        Permission.objects.filter(user=self.user8, course=self.course3).update(access=True)
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user4@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 2)
+
+    def test_list_curator_dont_see_list_of_members_when_administrator_dont_have_access(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user4@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 0)
 
     def test_users_list_ordering_by_fullname_desc(self):
         response = self.client.get(self.url + '?ordering=-full_name')

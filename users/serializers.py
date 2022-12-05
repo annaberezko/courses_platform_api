@@ -6,6 +6,7 @@ from django.core import exceptions
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+from courses.models import Permission
 from users.choices_types import ProfileRoles
 from users.models import InvitationToken
 
@@ -18,6 +19,13 @@ class TokenEmailObtainPairSerializer(TokenObtainPairSerializer):
         default_error_messages = {
                 "no_active_account": "Email or Password is not valid. Please, check provided information."
         }
+
+        @classmethod
+        def get_token(cls, user):
+            token = super().get_token(user)
+            if user.role == ProfileRoles.ADMINISTRATOR:
+                token['profile_access'] = Permission.objects.filter(user=user, access=True).exists()
+            return token
 
 
 class RequestEmailSerializer(serializers.Serializer):
