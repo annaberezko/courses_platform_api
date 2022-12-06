@@ -4,6 +4,8 @@ from courses.models import Course
 
 
 class CourseSerializer(serializers.ModelSerializer):
+    slug = serializers.CharField(read_only=True)
+
     class Meta:
         model = Course
         fields = '__all__'

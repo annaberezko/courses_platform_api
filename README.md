@@ -7,7 +7,7 @@ Can create courses, curators, administrate them, and see his learners
 When permission access=False, Administrator has limitation:
 * Can create only one course
 * Can't create curator
-* See only 5 members
+* See only 5 learners
 ### Curator 
 Can have a few administrators. 
 See only courses and members of administrators with access. In other case doesn't see any courses and users of this administrator.

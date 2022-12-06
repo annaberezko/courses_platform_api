@@ -281,19 +281,22 @@ class UsersListAPIViewTestCase(APITestCase):
         self.user8 = User.objects.create_user(email='user8@user.com', password='strong', first_name="User", last_name="Bbb")
         self.user9 = User.objects.create_user(email='user9@user.com', password='strong', first_name="Aaa", last_name="Bbb")
         self.user10 = User.objects.create_user(email='user10@user.com', password='strong', first_name="Bbb", last_name="Aaa")
-        self.course1 = Course.objects.create(admin=self.user2, name="Course 1")
+        self.user11 = User.objects.create_user(email='user11@user.com', password='strong', first_name="Bbb", last_name="Abb")
+        self.user12 = User.objects.create_user(email='user12@user.com', password='strong')
         self.lead1 = Lead.objects.create(user=self.user4, lead=self.user2)
-        self.permission1 = Permission.objects.create(user=self.user7, course=self.course1, access=True)
-        self.permission2 = Permission.objects.create(user=self.user8, course=self.course1)
-        self.course2 = Course.objects.create(admin=self.user3, name="Course 2")
-        self.course3 = Course.objects.create(admin=self.user3, name="Course 3")
         self.lead2 = Lead.objects.create(user=self.user5, lead=self.user3)
         self.lead3 = Lead.objects.create(user=self.user6, lead=self.user3)
+        self.course1 = Course.objects.create(admin=self.user2, name="Course 1")
+        self.course2 = Course.objects.create(admin=self.user3, name="Course 2")
+        self.course3 = Course.objects.create(admin=self.user3, name="Course 3")
+        self.permission1 = Permission.objects.create(user=self.user7, course=self.course1, access=True)
+        self.permission2 = Permission.objects.create(user=self.user8, course=self.course1)
         self.permission3 = Permission.objects.create(user=self.user7, course=self.course2)
-        self.permission4 = Permission.objects.create(user=self.user7, course=self.course2)
-        self.permission5 = Permission.objects.create(user=self.user8, course=self.course3)
-        self.permission6 = Permission.objects.create(user=self.user9, course=self.course2)
+        self.permission4 = Permission.objects.create(user=self.user8, course=self.course3)
+        self.permission5 = Permission.objects.create(user=self.user9, course=self.course2)
         self.permission6 = Permission.objects.create(user=self.user10, course=self.course2)
+        self.permission7 = Permission.objects.create(user=self.user11, course=self.course2)
+        self.permission8 = Permission.objects.create(user=self.user12, course=self.course2)
 
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
@@ -324,30 +327,30 @@ class UsersListAPIViewTestCase(APITestCase):
     def test_list_superuser_see_all_roles_except_superusers(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['count'], 9)
+        self.assertEqual(response.data['count'], 11)
         self.assertTrue(type(response.data['results'][0]['role']) is str)
 
-    def test_list_administrator_see_his_curator_and_learner(self):
+    def test_list_administrator_without_access_see_5_his_learners(self):
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user2@user.com', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['count'], 3)
+        self.assertEqual(response.data['count'], 2)
 
-    def test_list_administrator_with_access_see_his_curators_and_learner(self):
+    def test_list_administrator_with_access_see_his_curators_and_learners(self):
+        Permission.objects.create(user=self.user3, access=True)
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user3@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 8)
+
+    def test_list_administrator_without_access_see_only_five_curators_and_courses(self):
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user3@user.com', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 5)
-
-    def test_list_administrator_without_access_see_only_five_curators_and_courses(self):
-        self.assess = Permission.objects.create(user=self.user3, access=True)
-        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user3@user.com', 'password': 'strong'})
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['count'], 6)
         self.assertTrue(type(response.data['results'][0]['role']) is str)
 
     def test_list_curator_see_all_belows_roles_and_dont_see_users_contact_data(self):
@@ -383,8 +386,8 @@ class UsersListAPIViewTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['results'][0]['full_name'], "User Bbb")
         self.assertEqual(response.data['results'][1]['full_name'], "User Aaa")
-        self.assertEqual(response.data['results'][2]['full_name'], "Bbb Aaa")
-        self.assertEqual(response.data['results'][3]['full_name'], "Aaa Bbb")
+        self.assertEqual(response.data['results'][2]['full_name'], "Bbb Abb")
+        self.assertEqual(response.data['results'][3]['full_name'], "Bbb Aaa")
 
     def test_superuser_create_administrator_and_send_invitation_mail(self):
         response = self.client.post(self.url, self.data)
@@ -487,4 +490,78 @@ class AdministratorsListAPIViewTestCase(APITestCase):
 
     def test_administrators_list(self):
         response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+class UserAPIViewAPIViewTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_superuser(email='super@super.super', password='strong')
+        self.user1 = User.objects.create_user(email='user1@user.com', password='strong', role=ProfileRoles.ADMINISTRATOR)
+        self.user2 = User.objects.create_user(email='user2@user.com', password='strong', role=ProfileRoles.ADMINISTRATOR)
+        self.user3 = User.objects.create_user(email='user3@user.com', password='strong', role=ProfileRoles.CURATOR)
+        self.user4 = User.objects.create_user(email='user4@user.com', password='strong', role=ProfileRoles.CURATOR)
+        self.user5 = User.objects.create_user(email='user5@user.com', password='strong')
+        self.user6 = User.objects.create_user(email='user6@user.com', password='strong')
+        self.course = Course.objects.create(admin=self.user1, name="Course 1")
+        self.permission1 = Permission.objects.create(user=self.user1, access=True)
+        self.permission2 = Permission.objects.create(user=self.user5, course=self.course, access=True)
+        self.permission3 = Permission.objects.create(user=self.user6, course=self.course)
+
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user1@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+
+        self.url = reverse('v1.0:users:user-detail', args=[self.user6.slug])
+        self.response = self.client.get(self.url)
+
+        self.data = {
+            'first_name': 'UserFirst',
+            'last_name': 'UserLast',
+            'phone': 777777777,
+            'instagram': 'googleaccaunt',
+            'facebook': 'facebookaccount',
+        }
+
+    def test_user_detail_unauthorized_permission_no_access(self):
+        client = APIClient()
+        response = client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_user_detail_learner_permission_no_access(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user5@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_user_detail_curator_read_only(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user4@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = self.client.patch(self.url, self.data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_user_detail_admin_get(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(type(response.data['role']) is str)
+
+    def test_user_detail_admin_patch(self):
+        response = self.client.patch(self.url, self.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = self.client.patch(self.url, {'role': ProfileRoles.CURATOR})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(User.objects.filter(pk=self.user6.id, role=ProfileRoles.CURATOR).exists())
+        response = self.client.patch(self.url, {'email': 'new_email@user.com'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(User.objects.filter(pk=self.user6.id, email='new_email@user.com').exists())
+        response = self.client.patch(self.url, {'phone': '88888888'})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        response = self.client.patch(self.url, {'phone': '12345678901234567'})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        response = self.client.patch(self.url, {'phone': '1234567890123456'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = self.client.patch(self.url, {'phone': '999999999'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)

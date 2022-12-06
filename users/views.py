@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.aggregates import ArrayAgg
-from django.db.models import Value, Q
+from django.db.models import Value, Q, QuerySet
 from django.db.models.functions import Concat
 from rest_framework import generics, status
 from rest_framework.filters import OrderingFilter
@@ -86,7 +86,7 @@ class UsersListAPIView(generics.ListCreateAPIView):
     queryset = User.objects.all()
     permission_classes = (IsSuperuserOrAdministratorAllOrCuratorReadOnly, )
 
-    # filter_backends = [OrderingFilter]
+    filter_backends = [OrderingFilter]
     ordering_fields = ['role', 'courses', 'full_name']
     ordering = ['role', 'courses', 'full_name']
 
@@ -103,7 +103,8 @@ class UsersListAPIView(generics.ListCreateAPIView):
             if role == ProfileRoles.ADMINISTRATOR:
                 queryset = User.objects.filter(Q(users__lead_id=pk) | Q(permission__course__admin_id=pk)).\
                                values(*default_values).annotate(**annotation)
-                return queryset if self.request.auth['profile_access'] else queryset[:5]
+                return queryset.filter(role=ProfileRoles.LEARNER) \
+                    if role == ProfileRoles.ADMINISTRATOR and not self.request.auth['profile_access'] else queryset
 
             elif role == ProfileRoles.CURATOR:
                 admin_list = Lead.objects.values_list('lead_id').filter(user_id=pk, lead__permission__access=True)
@@ -120,6 +121,13 @@ class UsersListAPIView(generics.ListCreateAPIView):
             return UsersListSerializer
         return CreateUserSerializer
 
+    def filter_queryset(self, queryset):
+        for backend in list(self.filter_backends):
+            queryset = backend().filter_queryset(self.request, queryset, self)
+        if self.request.user.role == ProfileRoles.ADMINISTRATOR and not self.request.auth['profile_access']:
+            return queryset[:5]
+        return queryset
+
     def perform_create(self, serializer):
         user = User.objects.create_user(**serializer.validated_data)
         user.set_lead(self.request.user)
@@ -130,16 +138,17 @@ class UsersListAPIView(generics.ListCreateAPIView):
 class UserAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     permission_classes = (IsSuperuserOrAdministratorAllOrCuratorReadOnly, )
+    lookup_field = 'slug'
 
     def get_serializer_class(self):
         if self.request.user.role == ProfileRoles.CURATOR:
             return UsersListForCuratorSerializer
         return UserSerializer
 
-    def get_serializer_class(self):
+    def get_queryset(self):
         if self.request.user.role == ProfileRoles.CURATOR:
-            pk = self.kwargs['pk']
-            return User.objects.filter(pk=pk).annotate(full_name=Concat('first_name', Value(' '), 'last_name'))
+            slug = self.kwargs['slug']
+            return User.objects.filter(slug=slug).annotate(full_name=Concat('first_name', Value(' '), 'last_name'))
         return super().get_queryset()
 
 

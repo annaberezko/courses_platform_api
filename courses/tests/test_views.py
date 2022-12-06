@@ -153,7 +153,7 @@ class CourseAPIViewAPIViewTestCase(APITestCase):
         self.course4 = Course.objects.create(admin=self.user1, name="Course 4")
         self.course5 = Course.objects.create(admin=self.user2, name="Course 5", access=False)
 
-        self.url = reverse('v1.0:courses:course-detail', args=[self.course1.id])
+        self.url = reverse('v1.0:courses:course-detail', args=[self.course1.slug])
         self.data = {
             'name': 'New Course'
         }
@@ -194,7 +194,7 @@ class CourseAPIViewAPIViewTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_course_detail_page_with_no_access_field_administrator_permission_only_get_method_access(self):
-        url = reverse('v1.0:courses:course-detail', args=[self.course5.id])
+        url = reverse('v1.0:courses:course-detail', args=[self.course5.slug])
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user2@user.com', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
         response = self.client.get(url)
@@ -213,7 +213,7 @@ class CourseAPIViewAPIViewTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         response = self.client.delete(self.url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        url = reverse('v1.0:courses:course-detail', args=[self.course5.id])
+        url = reverse('v1.0:courses:course-detail', args=[self.course5.slug])
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         response = self.client.patch(url)

@@ -55,3 +55,4 @@ class CourseAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Course.objects.all()
     permission_classes = (IsSuperuserOrAdministratorWithCourseAccessAllOrCuratorWithCourseAccessReadOnly, )
     serializer_class = CourseSerializer
+    lookup_field = 'slug'

@@ -1,6 +1,11 @@
+from django.contrib.auth import get_user_model
+from django.db.models import Q, Value
+from django.db.models.functions import Concat
+
 from rest_framework.permissions import IsAuthenticated, SAFE_METHODS
 
 from users.choices_types import ProfileRoles
+User = get_user_model()
 
 
 class IsSuperuser(IsAuthenticated):
