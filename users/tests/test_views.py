@@ -433,17 +433,24 @@ class RolesListAPIViewTestCase(APITestCase):
 
     def test_roles_list_learner_permission_no_access(self):
         client = APIClient()
-        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user4@user.com', 'password': 'strong'})
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        res = client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user4@user.com', 'password': 'strong'})
+        client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
         response = client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_roles_list_curator_permission_no_access(self):
         client = APIClient()
-        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user3@user.com', 'password': 'strong'})
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        res = client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user3@user.com', 'password': 'strong'})
+        client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
         response = client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_roles_list_administrator_permission_no_access(self):
+        client = APIClient()
+        res = client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user2@user.com', 'password': 'strong'})
+        client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_roles_list_superuser_see_all_roles_except_superuser(self):
         client = APIClient()
@@ -453,13 +460,6 @@ class RolesListAPIViewTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['roles_list']), 3)
 
-    def test_roles_list_administrator_see_below_roles(self):
-        client = APIClient()
-        res = client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user2@user.com', 'password': 'strong'})
-        client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
-        response = client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['roles_list']), 2)
 
 
 class AdministratorsListAPIViewTestCase(APITestCase):
@@ -565,3 +565,7 @@ class UserAPIViewAPIViewTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response = self.client.patch(self.url, {'phone': '999999999'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_user_detail_admin_delete(self):
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)

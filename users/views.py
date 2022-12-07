@@ -153,7 +153,7 @@ class UserAPIView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class RolesListAPIView(APIView):
-    permission_classes = (IsSuperuserOrAdministrator, )
+    permission_classes = (IsSuperuser, )
 
     def get(self, request, *args, **kwargs):
         role = request.user.role
