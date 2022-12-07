@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.aggregates import ArrayAgg
-from django.db.models import Value, Q
+from django.db.models import Value, Q, QuerySet
 from django.db.models.functions import Concat
 from rest_framework import generics, status
 from rest_framework.filters import OrderingFilter
@@ -101,15 +101,17 @@ class UsersListAPIView(generics.ListCreateAPIView):
             }
 
             if role == ProfileRoles.ADMINISTRATOR:
-                return User.objects.values(*default_values).annotate(**annotation).\
-                    filter(Q(curators__lead_id=pk) | Q(permission__course__admin_id=pk))
+                queryset = User.objects.filter(Q(users__lead_id=pk) | Q(permission__course__admin_id=pk)).\
+                               values(*default_values).annotate(**annotation)
+                return queryset.filter(role=ProfileRoles.LEARNER) \
+                    if role == ProfileRoles.ADMINISTRATOR and not self.request.auth['profile_access'] else queryset
 
             elif role == ProfileRoles.CURATOR:
-                admin_list = Lead.objects.values_list('lead_id').filter(user_id=pk)
-                return User.objects.values('id', 'role', 'last_login', 'date_joined').annotate(**annotation).\
-                    filter(permission__access=True, permission__course__admin_id__in=admin_list)
+                admin_list = Lead.objects.values_list('lead_id').filter(user_id=pk, lead__permission__access=True)
+                return User.objects.filter(permission__access=True, permission__course__admin_id__in=admin_list).\
+                    values('id', 'role', 'last_login', 'date_joined').annotate(**annotation)
 
-            return User.objects.values(*default_values).annotate(**annotation).exclude(role=ProfileRoles.SUPERUSER)
+            return User.objects.exclude(role=ProfileRoles.SUPERUSER).values(*default_values).annotate(**annotation)
         return super().get_queryset()
 
     def get_serializer_class(self):
@@ -118,6 +120,13 @@ class UsersListAPIView(generics.ListCreateAPIView):
                 return UsersListForCuratorSerializer
             return UsersListSerializer
         return CreateUserSerializer
+
+    def filter_queryset(self, queryset):
+        for backend in list(self.filter_backends):
+            queryset = backend().filter_queryset(self.request, queryset, self)
+        if self.request.user.role == ProfileRoles.ADMINISTRATOR and not self.request.auth['profile_access']:
+            return queryset[:5]
+        return queryset
 
     def perform_create(self, serializer):
         user = User.objects.create_user(**serializer.validated_data)
@@ -129,21 +138,22 @@ class UsersListAPIView(generics.ListCreateAPIView):
 class UserAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     permission_classes = (IsSuperuserOrAdministratorAllOrCuratorReadOnly, )
+    lookup_field = 'slug'
 
     def get_serializer_class(self):
         if self.request.user.role == ProfileRoles.CURATOR:
             return UsersListForCuratorSerializer
         return UserSerializer
 
-    def get_serializer_class(self):
+    def get_queryset(self):
         if self.request.user.role == ProfileRoles.CURATOR:
-            pk = self.kwargs['pk']
-            return User.objects.filter(pk=pk).annotate(full_name=Concat('first_name', Value(' '), 'last_name'))
+            slug = self.kwargs['slug']
+            return User.objects.filter(slug=slug).annotate(full_name=Concat('first_name', Value(' '), 'last_name'))
         return super().get_queryset()
 
 
 class RolesListAPIView(APIView):
-    permission_classes = (IsSuperuserOrAdministrator, )
+    permission_classes = (IsSuperuser, )
 
     def get(self, request, *args, **kwargs):
         role = request.user.role

@@ -6,5 +6,5 @@ app_name = 'courses'
 
 urlpatterns = [
     path('', CoursesListAPIView.as_view(), name='courses-list'),
-    path('<int:pk>/', CourseAPIView.as_view(), name='course-detail')
+    path('<str:slug>/', CourseAPIView.as_view(), name='course-detail')
     ]

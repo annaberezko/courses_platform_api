@@ -8,12 +8,14 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from rest_framework.authtoken.models import Token
 
+from courses_platform_api.mixins import Generator
 from courses_platform_api.settings import EMAIL_HOST_USER, FRONT_END_NEW_PASSWORD_URL
 from users.choices_types import ProfileRoles
 from users.managers import UserManager
 
 
 class User(AbstractBaseUser):
+    slug = models.SlugField('slug', max_length=20, unique=True)
     role = models.IntegerField('role', choices=ProfileRoles.CHOICES, default=3)
     first_name = models.CharField('first name', max_length=50, null=True, blank=True)
     last_name = models.CharField('last name', max_length=50, null=True, blank=True)
@@ -71,11 +73,16 @@ class User(AbstractBaseUser):
     def __str__(self):
         return self.get_full_name()
 
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.slug = Generator.slug(self.id)
+        super().save(*args, **kwargs)
+
 
 class InvitationToken(Token):
     type = models.CharField(max_length=20, default="invitation")
 
 
 class Lead(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='curators')
-    lead = models.ForeignKey(User, on_delete=models.CASCADE, related_name='administrators')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='users')
+    lead = models.ForeignKey(User, on_delete=models.CASCADE, related_name='leads')

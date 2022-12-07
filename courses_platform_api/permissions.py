@@ -1,6 +1,11 @@
+from django.contrib.auth import get_user_model
+from django.db.models import Q, Value
+from django.db.models.functions import Concat
+
 from rest_framework.permissions import IsAuthenticated, SAFE_METHODS
 
 from users.choices_types import ProfileRoles
+User = get_user_model()
 
 
 class IsSuperuser(IsAuthenticated):
@@ -36,13 +41,13 @@ class IsSuperuserOrAdministratorAllOrCuratorReadOnly(IsAuthenticated):
                     )
 
 
-class IsSuperuserOrAdministratorWithCourseAccessAllOrCuratorWithCourseAccessReadOnly(IsAuthenticated):
+class IsSuperuserAllOrAdministratorActiveCoursesAllOrCuratorActiveCoursesReadOnly(IsAuthenticated):
     def has_object_permission(self, request, view, obj):
         perm = super().has_permission(request, view)
         return bool(perm and (
                 request.user.role == ProfileRoles.SUPERUSER or
                 (request.user.role == ProfileRoles.ADMINISTRATOR and (
                         request.method in SAFE_METHODS or
-                        (obj.access and obj.admin == request.user))) or
-                (request.user.role == ProfileRoles.CURATOR and request.method in SAFE_METHODS and obj.access)
+                        (obj.is_active and obj.admin == request.user))) or
+                (request.user.role == ProfileRoles.CURATOR and request.method in SAFE_METHODS and obj.is_active)
         ))

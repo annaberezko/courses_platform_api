@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from courses.models import Course, Permission
 from courses.serializers import CoursesListSerializer, CourseSerializer
 from courses_platform_api.permissions import IsSuperuserOrAdministratorAllOrCuratorReadOnly, \
-    IsSuperuserOrAdministratorWithCourseAccessAllOrCuratorWithCourseAccessReadOnly
+    IsSuperuserAllOrAdministratorActiveCoursesAllOrCuratorActiveCoursesReadOnly
 from users.choices_types import ProfileRoles
 from users.models import Lead
 
@@ -23,11 +23,11 @@ class CoursesListAPIView(generics.ListCreateAPIView):
         if self.request.method == 'GET':
             role = self.request.user.role
             pk = self.request.user.pk
-            queryset = Course.objects.values('id', 'name', 'cover', 'description', 'sequence').\
+            queryset = Course.objects.values('id', 'name', 'cover', 'description', 'sequence', 'is_active').\
                 annotate(admin=Concat('admin__first_name', Value(' '), 'admin__last_name')).distinct()
             if role == ProfileRoles.CURATOR:
                 admin_list = Lead.objects.values_list('lead_id').filter(user_id=pk)
-                return queryset.filter(admin_id__in=admin_list, access=True)
+                return queryset.filter(admin_id__in=admin_list, is_active=True)
             return queryset.filter(admin_id=pk) if role == ProfileRoles.ADMINISTRATOR else queryset
         return super().get_queryset()
 
@@ -53,5 +53,6 @@ class CoursesListAPIView(generics.ListCreateAPIView):
 
 class CourseAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Course.objects.all()
-    permission_classes = (IsSuperuserOrAdministratorWithCourseAccessAllOrCuratorWithCourseAccessReadOnly, )
+    permission_classes = (IsSuperuserAllOrAdministratorActiveCoursesAllOrCuratorActiveCoursesReadOnly, )
     serializer_class = CourseSerializer
+    lookup_field = 'slug'
