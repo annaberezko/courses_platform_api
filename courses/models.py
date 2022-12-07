@@ -4,7 +4,7 @@ from django.db import models
 from imagekit.processors import Thumbnail, TrimBorderColor, Adjust
 from imagekit.models import ProcessedImageField
 
-from courses_platform_api.mixins import Generator
+from courses_platform_api.mixins import GeneratorMixin
 from courses_platform_api.settings import VALID_EXTENSIONS
 
 User = get_user_model()
@@ -36,7 +36,7 @@ class Course(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.id:
-            self.slug = Generator.slug(self.id)
+            self.slug = GeneratorMixin.slug(self.id)
         super().save(*args, **kwargs)
 
 

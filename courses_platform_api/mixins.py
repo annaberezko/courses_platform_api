@@ -2,7 +2,7 @@ import random
 import string
 
 
-class Generator:
+class GeneratorMixin:
     @staticmethod
     def slug(pk, length=15):
         chars = string.ascii_letters + "-" + string.digits

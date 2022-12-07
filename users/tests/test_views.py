@@ -551,6 +551,9 @@ class UserAPIViewAPIViewTestCase(APITestCase):
     def test_user_detail_admin_patch(self):
         response = self.client.patch(self.url, self.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        user6 = User.objects.filter(slug=self.user6.slug).values_list('first_name', 'last_name')[0]
+        self.assertFalse(self.user6.first_name == user6[0])
+        self.assertFalse(self.user6.last_name == user6[1])
         response = self.client.patch(self.url, {'role': ProfileRoles.CURATOR})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(User.objects.filter(pk=self.user6.id, role=ProfileRoles.CURATOR).exists())

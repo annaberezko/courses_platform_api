@@ -94,11 +94,11 @@ class UsersListSerializer(serializers.ModelSerializer):
     slug = serializers.CharField(read_only=True)
     role = serializers.SerializerMethodField()
     full_name = serializers.CharField()
-    courses = serializers.CharField()
+    courses_list = serializers.CharField()
 
     class Meta:
         model = User
-        fields = ['slug', 'role', 'full_name', 'email', 'phone', 'instagram', 'facebook', 'last_login', 'date_joined', 'courses']
+        fields = ['slug', 'role', 'full_name', 'email', 'phone', 'instagram', 'facebook', 'last_login', 'date_joined', 'courses_list']
 
     def get_role(self, obj):
         role = obj['role'] if type(obj) is dict else obj.role
@@ -106,20 +106,23 @@ class UsersListSerializer(serializers.ModelSerializer):
 
 
 class UsersListForCuratorSerializer(UsersListSerializer):
-
     class Meta(UsersListSerializer.Meta):
-        fields = ['slug', 'role', 'full_name', 'last_login', 'date_joined', 'courses']
+        fields = ['slug', 'role', 'full_name', 'last_login', 'date_joined', 'courses_list']
 
 
 class UserSerializer(serializers.ModelSerializer):
     last_login = serializers.DateTimeField(read_only=True)
     role = serializers.SerializerMethodField(read_only=True)
     email = serializers.EmailField(read_only=True)
+    full_name = serializers.CharField(read_only=True)
+    courses_list = serializers.CharField(read_only=True)
     phone = serializers.CharField(min_length=9, max_length=16)
+    first_name = serializers.CharField(write_only=True)
+    last_name = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
-        exclude = ['id', 'password', 'date_joined', 'security_code']
+        exclude = ['id', 'password', 'security_code']
 
     def get_role(self, obj):
         role = obj['role'] if type(obj) is dict else obj.role
