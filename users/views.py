@@ -94,7 +94,7 @@ class UsersListAPIView(generics.ListCreateAPIView):
         if self.request.method == 'GET':
             role = self.request.user.role
             pk = self.request.user.id
-            default_values = ['id', 'role', 'email', 'phone', 'instagram', 'facebook', 'last_login', 'date_joined']
+            default_values = ['slug', 'role', 'email', 'phone', 'instagram', 'facebook', 'last_login', 'date_joined']
             annotation = {
                 "full_name": Concat('first_name', Value(' '), 'last_name'),
                 "courses": ArrayAgg('permission__course__name', distinct=True)
