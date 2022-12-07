@@ -8,7 +8,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from rest_framework.authtoken.models import Token
 
-from courses_platform_api.mixins import Generator
+from courses_platform_api.mixins import GeneratorMixin
 from courses_platform_api.settings import EMAIL_HOST_USER, FRONT_END_NEW_PASSWORD_URL
 from users.choices_types import ProfileRoles
 from users.managers import UserManager
@@ -75,7 +75,7 @@ class User(AbstractBaseUser):
 
     def save(self, *args, **kwargs):
         if not self.id:
-            self.slug = Generator.slug(self.id)
+            self.slug = GeneratorMixin.slug(self.id)
         super().save(*args, **kwargs)
 
 
