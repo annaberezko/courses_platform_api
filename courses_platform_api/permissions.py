@@ -41,13 +41,13 @@ class IsSuperuserOrAdministratorAllOrCuratorReadOnly(IsAuthenticated):
                     )
 
 
-class IsSuperuserOrAdministratorWithCourseAccessAllOrCuratorWithCourseAccessReadOnly(IsAuthenticated):
+class IsSuperuserAllOrAdministratorActiveCoursesAllOrCuratorActiveCoursesReadOnly(IsAuthenticated):
     def has_object_permission(self, request, view, obj):
         perm = super().has_permission(request, view)
         return bool(perm and (
                 request.user.role == ProfileRoles.SUPERUSER or
                 (request.user.role == ProfileRoles.ADMINISTRATOR and (
                         request.method in SAFE_METHODS or
-                        (obj.access and obj.admin == request.user))) or
-                (request.user.role == ProfileRoles.CURATOR and request.method in SAFE_METHODS and obj.access)
+                        (obj.is_active and obj.admin == request.user))) or
+                (request.user.role == ProfileRoles.CURATOR and request.method in SAFE_METHODS and obj.is_active)
         ))

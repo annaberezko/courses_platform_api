@@ -32,7 +32,7 @@ class Course(models.Model):
     )
     description = models.TextField('description', null=True, blank=True)
     sequence = models.BooleanField('sequence tasks', default=False)
-    access = models.BooleanField('is active', default=True)
+    is_active = models.BooleanField('is active', default=True)
 
     def save(self, *args, **kwargs):
         if not self.id:

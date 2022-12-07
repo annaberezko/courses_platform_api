@@ -29,7 +29,7 @@ class CoursesListAPIViewTestCase(APITestCase):
         self.course2 = Course.objects.create(admin=self.user2, name="Course 2")
         self.course3 = Course.objects.create(admin=self.user1, name="Course 3")
         self.course4 = Course.objects.create(admin=self.user1, name="Course 4")
-        self.course5 = Course.objects.create(admin=self.user2, name="Course 5", access=False)
+        self.course5 = Course.objects.create(admin=self.user2, name="Course 5", is_active=False)
 
         self.data = {
             'name': 'New Course'
@@ -151,7 +151,7 @@ class CourseAPIViewAPIViewTestCase(APITestCase):
         self.course2 = Course.objects.create(admin=self.user2, name="Course 2")
         self.course3 = Course.objects.create(admin=self.user1, name="Course 3")
         self.course4 = Course.objects.create(admin=self.user1, name="Course 4")
-        self.course5 = Course.objects.create(admin=self.user2, name="Course 5", access=False)
+        self.course5 = Course.objects.create(admin=self.user2, name="Course 5", is_active=False)
 
         self.url = reverse('v1.0:courses:course-detail', args=[self.course1.slug])
         self.data = {
