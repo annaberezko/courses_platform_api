@@ -345,6 +345,14 @@ class UsersListAPIViewTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 8)
 
+    def test_list_user_with_filter_by_course_search(self):
+        Permission.objects.create(user=self.user3, access=True)
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user3@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.get(self.url + '?course_search=' + self.course2.slug)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 5)
+
     def test_list_administrator_without_access_see_only_five_curators_and_courses(self):
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user3@user.com', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
@@ -459,7 +467,6 @@ class RolesListAPIViewTestCase(APITestCase):
         response = client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['roles_list']), 3)
-
 
 
 class AdministratorsListAPIViewTestCase(APITestCase):

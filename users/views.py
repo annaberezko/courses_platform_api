@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Value, Q
 from django.db.models.functions import Concat
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status
 from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import AllowAny
@@ -10,6 +11,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from courses_platform_api.permissions import IsSuperuserOrAdministratorAllOrCuratorReadOnly, IsSuperuser
 from users.choices_types import ProfileRoles
+from users.filters import UsersCourseFilter
 from users.mixin import UserMixin
 from users.models import InvitationToken, Lead
 from users.serializers import TokenEmailObtainPairSerializer, RequestEmailSerializer, SecurityCodeSerializer, \
@@ -85,7 +87,9 @@ class UsersListAPIView(generics.ListCreateAPIView):
     queryset = User.objects.all()
     permission_classes = (IsSuperuserOrAdministratorAllOrCuratorReadOnly, )
 
-    filter_backends = [OrderingFilter]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_class = UsersCourseFilter
+
     ordering_fields = ['role', 'courses', 'full_name']
     ordering = ['role', 'courses', 'full_name']
 
