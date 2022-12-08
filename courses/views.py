@@ -23,7 +23,7 @@ class CoursesListAPIView(generics.ListCreateAPIView):
         if self.request.method == 'GET':
             role = self.request.user.role
             pk = self.request.user.pk
-            queryset = Course.objects.values('id', 'name', 'cover', 'description', 'sequence', 'is_active').\
+            queryset = Course.objects.values('slug', 'name', 'cover', 'description', 'sequence', 'is_active').\
                 annotate(admin=Concat('admin__first_name', Value(' '), 'admin__last_name')).distinct()
             if role == ProfileRoles.CURATOR:
                 admin_list = Lead.objects.values_list('lead_id').filter(user_id=pk)
