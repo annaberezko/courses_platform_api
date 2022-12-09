@@ -41,6 +41,10 @@ class Course(models.Model):
             self.slug = GeneratorMixin.slug(self.id)
         super().save(*args, **kwargs)
 
+    def switch_status(self):
+        self.is_active = not self.is_active
+        self.save()
+
 
 class Permission(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
