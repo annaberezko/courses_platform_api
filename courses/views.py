@@ -6,6 +6,7 @@ from rest_framework.response import Response
 
 from courses.models import Course, Permission
 from courses.serializers import CoursesListSerializer, CourseSerializer
+from courses_platform_api.mixins import ImageMixin
 from courses_platform_api.permissions import IsSuperuserOrAdministratorAllOrCuratorReadOnly, \
     IsSuperuserAllOrAdministratorActiveCoursesAllOrCuratorActiveCoursesReadOnly
 from users.choices_types import ProfileRoles
@@ -56,3 +57,14 @@ class CourseAPIView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = (IsSuperuserAllOrAdministratorActiveCoursesAllOrCuratorActiveCoursesReadOnly, )
     serializer_class = CourseSerializer
     lookup_field = 'slug'
+
+    def perform_update(self, serializer):
+        instance = self.get_object()
+        if instance.cover:
+            ImageMixin.remove(instance.cover)
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        if instance.cover:
+            ImageMixin.remove(instance.cover)
+        instance.delete()
