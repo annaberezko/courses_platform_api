@@ -31,12 +31,22 @@ class IsSuperuserOrAdministratorOrCurator(IsAuthenticated):
         ))
 
 
+class IsSuperuserOrAdministratorOwner(IsAuthenticated):
+    def has_object_permission(self, request, view, obj):
+        perm = super().has_permission(request, view)
+        return bool(perm and (
+                request.user.role == ProfileRoles.SUPERUSER or
+                (request.user.role == ProfileRoles.ADMINISTRATOR and obj.admin == request.user)
+        ))
+
+
 class IsSuperuserOrAdministratorAllOrCuratorReadOnly(IsAuthenticated):
     def has_permission(self, request, view):
         perm = super().has_permission(request, view)
-        return bool(perm and (request.user.role in (ProfileRoles.SUPERUSER, ProfileRoles.ADMINISTRATOR) or
-                              (request.method in SAFE_METHODS and request.user.role == ProfileRoles.CURATOR))
-                    )
+        return bool(perm and (
+                request.user.role in (ProfileRoles.SUPERUSER, ProfileRoles.ADMINISTRATOR) or
+                (request.method in SAFE_METHODS and request.user.role == ProfileRoles.CURATOR)
+        ))
 
 
 class IsSuperuserAllOrAdministratorActiveCoursesAllOrCuratorActiveCoursesReadOnly(IsAuthenticated):
@@ -44,8 +54,6 @@ class IsSuperuserAllOrAdministratorActiveCoursesAllOrCuratorActiveCoursesReadOnl
         perm = super().has_permission(request, view)
         return bool(perm and (
                 request.user.role == ProfileRoles.SUPERUSER or
-                (request.user.role == ProfileRoles.ADMINISTRATOR and (
-                        request.method in SAFE_METHODS or
-                        (obj.is_active and obj.admin == request.user))) or
+                (request.user.role == ProfileRoles.ADMINISTRATOR and obj.admin == request.user and obj.is_active) or
                 (request.user.role == ProfileRoles.CURATOR and request.method in SAFE_METHODS and obj.is_active)
         ))

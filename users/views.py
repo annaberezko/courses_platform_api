@@ -95,8 +95,8 @@ class UsersListAPIView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         if self.request.method == 'GET':
-            role = self.request.user.role
             pk = self.request.user.id
+            role = self.request.user.role
             default_values = ['slug', 'role', 'email', 'phone', 'instagram', 'facebook', 'last_login', 'date_joined']
             annotation = UserMixin.annotation()
 
