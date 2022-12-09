@@ -1,3 +1,5 @@
+import time
+
 from django.contrib.auth import get_user_model
 from django.core.validators import FileExtensionValidator
 from django.db import models
@@ -12,7 +14,7 @@ User = get_user_model()
 
 class Course(models.Model):
     def file_path(self, filename):
-        return "%s/courses/%s/%s" % (self.admin, self.id, filename)
+        return "media/%s/courses/%s/%s_%s" % (self.admin.slug, self.slug,  str(time.time()), filename)
 
     slug = models.SlugField('slug', max_length=20, unique=True)
     admin = models.ForeignKey(User, on_delete=models.CASCADE, related_name='courses')
