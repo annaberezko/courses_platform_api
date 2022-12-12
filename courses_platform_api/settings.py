@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     'django_filters',
     'users',
     'courses',
+    'lessons',
 ]
 
 MIDDLEWARE = [
@@ -125,6 +126,7 @@ FRONT_END_NEW_PASSWORD_URL = f'{FRONT_END_DOMAIN_URL}{FRONT_END_NEW_PASSWORD_PAR
 
 
 VALID_EXTENSIONS = ['jpg', 'png', 'jpeg']
+FILES_EXTENSIONS = ['jpg', 'png', 'jpeg', 'pdf']
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
@@ -167,3 +169,5 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
+
+THUMB_SIZE = 800
