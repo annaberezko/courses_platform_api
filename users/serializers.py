@@ -6,7 +6,7 @@ from django.core import exceptions
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from courses.models import Permission
+from courses.models import Permission, Course
 from users.choices_types import ProfileRoles
 from users.models import InvitationToken
 
@@ -90,11 +90,19 @@ class CreateUserSerializer(serializers.ModelSerializer):
         fields = ['role', 'first_name', 'last_name', 'email', 'phone', 'instagram', 'facebook', 'curator_lead']
 
 
+class UserCoursesListSerializer(serializers.ModelSerializer):
+    access = serializers.BooleanField()
+
+    class Meta:
+        model = Course
+        fields = ('slug', 'name', 'access')
+
+
 class UsersListSerializer(serializers.ModelSerializer):
     slug = serializers.CharField(read_only=True)
     role = serializers.SerializerMethodField()
     full_name = serializers.CharField()
-    courses_list = serializers.CharField()
+    courses_list = UserCoursesListSerializer(many=True, read_only=True)
 
     class Meta:
         model = User
@@ -115,7 +123,7 @@ class UserSerializer(serializers.ModelSerializer):
     role = serializers.SerializerMethodField(read_only=True)
     email = serializers.EmailField(read_only=True)
     full_name = serializers.CharField(read_only=True)
-    courses_list = serializers.CharField(read_only=True)
+    courses_list = UserCoursesListSerializer(many=True, read_only=True)
     phone = serializers.CharField(min_length=9, max_length=16)
     first_name = serializers.CharField(write_only=True)
     last_name = serializers.CharField(write_only=True)
