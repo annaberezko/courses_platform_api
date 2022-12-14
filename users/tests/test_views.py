@@ -289,6 +289,7 @@ class UsersListAPIViewTestCase(APITestCase):
         self.course1 = Course.objects.create(admin=self.user2, name="Course 1")
         self.course2 = Course.objects.create(admin=self.user3, name="Course 2")
         self.course3 = Course.objects.create(admin=self.user3, name="Course 3")
+
         self.permission1 = Permission.objects.create(user=self.user7, course=self.course1, access=True)
         self.permission2 = Permission.objects.create(user=self.user8, course=self.course1)
         self.permission3 = Permission.objects.create(user=self.user7, course=self.course2)
@@ -325,6 +326,8 @@ class UsersListAPIViewTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_list_superuser_see_all_roles_except_superusers(self):
+        self.permission9 = Permission.objects.create(user=self.user2, access=True)
+        self.permission10 = Permission.objects.create(user=self.user3, access=True)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 11)
