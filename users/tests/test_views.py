@@ -579,3 +579,71 @@ class UserAPIViewTestCase(APITestCase):
     def test_user_detail_admin_delete(self):
         response = self.client.delete(self.url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+
+class AdministratorSwitchStatusAPIViewTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_superuser(email='super@super.super', password='strong')
+        self.user1 = User.objects.create_user(email='user1@user.com', password='strong', role=ProfileRoles.ADMINISTRATOR)
+        self.user2 = User.objects.create_user(email='user2@user.com', password='strong', role=ProfileRoles.ADMINISTRATOR)
+        self.user3 = User.objects.create_user(email='user3@user.com', password='strong', role=ProfileRoles.CURATOR)
+        self.user4 = User.objects.create_user(email='user4@user.com', password='strong')
+        self.course1 = Course.objects.create(admin=self.user1, name="Course 1", is_active=True)
+        self.course2 = Course.objects.create(admin=self.user1, name="Course 2", is_active=True)
+        self.course3 = Course.objects.create(admin=self.user1, name="Course 3", is_active=True)
+        self.course4 = Course.objects.create(admin=self.user1, name="Course 4", is_active=True)
+        self.course5 = Course.objects.create(admin=self.user1, name="Course 5", is_active=True)
+        self.course6 = Course.objects.create(admin=self.user1, name="Course 6", is_active=True)
+        self.course7 = Course.objects.create(admin=self.user1, name="Course 7", is_active=True)
+
+        self.permission = Permission.objects.create(user=self.user1, access=True)
+
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+
+        self.url = reverse('v1.0:users:administrator-switch-status', args=[self.user1.slug])
+
+    def test_administrator_switch_access_status_unauthorized_permission_no_access(self):
+        client = APIClient()
+        response = client.put(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_administrator_switch_access_status_learner_permission_no_access(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user4@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.put(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_administrator_switch_access_status_curator_permission_no_access(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user3@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.put(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_administrator_switch_access_status_administrator_permission_no_access(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user1@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.put(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_administrator_switch_access_status_for_superuser(self):
+        response = self.client.put(self.url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertTrue(Course.objects.get(id=self.course1.id).is_active)
+        self.assertFalse(Course.objects.get(id=self.course2.id).is_active)
+        self.assertEqual(Course.objects.filter(admin=self.user1, is_active=False).count(), 6)
+
+        response = self.client.put(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(Permission.objects.filter(user=self.user1, access=True))
+
+
+    def test_administrator_witout_any_courses_switch_access_status_for_superuser(self):
+        self.url = reverse('v1.0:users:administrator-switch-status', args=[self.user2.slug])
+        response = self.client.put(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(Permission.objects.filter(user=self.user2, access=True))
+
+        response = self.client.put(self.url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
