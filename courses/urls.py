@@ -8,5 +8,5 @@ urlpatterns = [
     path('', CoursesListAPIView.as_view(), name='courses-list'),
     path('short-list/', CoursesShortListAPIView.as_view(), name='courses-short-list'),
     path('<str:slug>/', CourseAPIView.as_view(), name='course-detail'),
-    path('<str:slug>/switch-status/', CoursesSwitchStatusAPIView.as_view(), name='switch-status'),
+    path('<str:slug>/switch-status/', CoursesSwitchStatusAPIView.as_view(), name='course-switch-status'),
     ]

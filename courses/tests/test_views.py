@@ -232,26 +232,26 @@ class CoursesSwitchStatusAPIViewTestCase(APITestCase):
         self.course1 = Course.objects.create(admin=self.user1, name="Course 1")
         self.course2 = Course.objects.create(admin=self.user1, name="Course 2")
 
-        self.url = reverse('v1.0:courses:switch-status', args=[self.course1.slug])
+        self.url = reverse('v1.0:courses:course-switch-status', args=[self.course1.slug])
 
-    def test_course_detail_page_unauthorized_permission_no_access(self):
+    def test_course_switch_status_unauthorized_permission_no_access(self):
         client = APIClient()
         response = client.put(self.url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_course_detail_page_learner_permission_no_access(self):
+    def test_course_switch_status_learner_permission_no_access(self):
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user3@user.com', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
         response = self.client.put(self.url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_course_detail_page_administrator_permission_no_access(self):
+    def test_course_switch_status_administrator_permission_no_access(self):
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user2@user.com', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
         response = self.client.put(self.url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_course_detail_page_administrator_profile_not_accesses(self):
+    def test_course_switch_status_administrator_profile_not_accesses(self):
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user1@user.com', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
         response = self.client.put(self.url)
@@ -260,7 +260,7 @@ class CoursesSwitchStatusAPIViewTestCase(APITestCase):
         response = self.client.put(self.url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertFalse(response.data)
-        url = reverse('v1.0:courses:switch-status', args=[self.course2.slug])
+        url = reverse('v1.0:courses:course-switch-status', args=[self.course2.slug])
         response = self.client.put(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['is_active'], False)

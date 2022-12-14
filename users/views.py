@@ -9,9 +9,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from courses.models import Permission, Course
 from courses_platform_api.permissions import IsSuperuserOrAdministratorAllOrCuratorReadOnly, IsSuperuser
 from users.choices_types import ProfileRoles
-from users.filters import UsersCourseFilter
+from users.filters import UsersFilter
 from users.mixin import UserMixin
 from users.models import InvitationToken, Lead
 from users.serializers import TokenEmailObtainPairSerializer, RequestEmailSerializer, SecurityCodeSerializer, \
@@ -88,7 +89,7 @@ class UsersListAPIView(generics.ListCreateAPIView):
     permission_classes = (IsSuperuserOrAdministratorAllOrCuratorReadOnly, )
 
     filter_backends = [DjangoFilterBackend, OrderingFilter]
-    filterset_class = UsersCourseFilter
+    filterset_class = UsersFilter
 
     ordering_fields = ['role', 'courses', 'full_name']
     ordering = ['role', 'courses', 'full_name']
@@ -171,6 +172,24 @@ class AdministratorsListAPIView(APIView):
     permission_classes = (IsSuperuser, )
 
     def get(self, request, *args, **kwargs):
-        administrators = User.objects.values('id').annotate(full_name=Concat('first_name', Value(' '), 'last_name')).\
+        administrators = User.objects.values('slug').annotate(full_name=Concat('first_name', Value(' '), 'last_name')).\
             filter(role=ProfileRoles.ADMINISTRATOR)
         return Response({'data': list(administrators)}, status=status.HTTP_200_OK)
+
+
+class AdministratorSwitchStatusAPIView(APIView):
+    permission_classes = (IsSuperuser, )
+
+    def put(self, request, *args, **kwargs):
+        """
+        Switch method for change access status for administrator
+        """
+        slug = self.kwargs['slug']
+        if admin_permission := Permission.objects.select_related('user').filter(user__slug=slug):
+            admin_permission.delete()
+            if first_course := Course.objects.values_list('id').filter(admin__slug=slug).order_by('id'):
+                Course.objects.filter(admin__slug=slug).exclude(id=first_course[0][0]).update(is_active=False)
+            return Response({'access': False}, status=status.HTTP_204_NO_CONTENT)
+        user = User.objects.values_list('id').get(slug=slug)[0]
+        Permission.objects.create(user_id=user, access=True)
+        return Response({'access': True}, status=status.HTTP_200_OK)
