@@ -91,8 +91,8 @@ class UsersListAPIView(generics.ListCreateAPIView):
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = UsersFilter
 
-    ordering_fields = ['role', 'courses', 'full_name']
-    ordering = ['role', 'courses', 'full_name']
+    ordering_fields = ['role', 'courses_list', 'full_name']
+    ordering = ['role', 'courses_list', 'full_name']
 
     def get_queryset(self):
         if self.request.method == 'GET':
@@ -125,6 +125,7 @@ class UsersListAPIView(generics.ListCreateAPIView):
         return CreateUserSerializer
 
     def filter_queryset(self, queryset):
+        queryset = super().filter_queryset(queryset)
         for backend in list(self.filter_backends):
             queryset = backend().filter_queryset(self.request, queryset, self)
         if self.request.user.role == ProfileRoles.ADMINISTRATOR and not self.request.auth['profile_access']:

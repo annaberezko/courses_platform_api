@@ -394,6 +394,7 @@ class UsersListAPIViewTestCase(APITestCase):
 
     def test_users_list_ordering_by_fullname_desc(self):
         response = self.client.get(self.url + '?ordering=-full_name')
+        print(self.url + '?ordering=-full_name')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['results'][0]['full_name'], "User Bbb")
         self.assertEqual(response.data['results'][1]['full_name'], "User Aaa")
