@@ -1,26 +1,29 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Value
+from django.db.models import Value, F
 from django.db.models.functions import Concat
+from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import generics, status
+from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from courses.mixins import CourseMixin
 from courses.models import Course, Permission
-from courses.serializers import CoursesListSerializer, CourseSerializer
+from courses.serializers import CoursesListSerializer, CourseSerializer, CourseLearnersListSerializer
 from courses_platform_api.mixins import ImageMixin
 from courses_platform_api.permissions import IsSuperuserOrAdministratorAllOrCuratorReadOnly, \
     IsSuperuserAllOrAdministratorActiveCoursesAllOrCuratorActiveCoursesReadOnly, IsSuperuserOrAdministratorOwner
 from users.choices_types import ProfileRoles
+from users.mixin import UsersListAdministratorLimitPermissionAPIView
 
 User = get_user_model()
 
 
 class CoursesListAPIView(generics.ListCreateAPIView):
     queryset = Course.objects.all()
-    permission_classes = (IsSuperuserOrAdministratorAllOrCuratorReadOnly, )
     serializer_class = CourseSerializer
+    permission_classes = (IsSuperuserOrAdministratorAllOrCuratorReadOnly, )
 
     def get_queryset(self):
         if self.request.method == 'GET':
@@ -98,3 +101,32 @@ class CoursesSwitchStatusAPIView(generics.UpdateAPIView):
             return Response(status=status.HTTP_403_FORBIDDEN)
         instance.switch_status()
         return Response({'is_active': instance.is_active}, status=status.HTTP_200_OK)
+
+
+class CourseLearnersListAPIView(UsersListAdministratorLimitPermissionAPIView):
+    serializer_class = CourseLearnersListSerializer
+    permission_classes = (IsSuperuserOrAdministratorOwner, )
+
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_fields = ['access']
+    ordering_fields = ['full_name', 'access']
+    ordering = ['full_name', 'access']
+
+    def get_queryset(self):
+        slug = self.kwargs['slug']
+        return Permission.objects.select_related('user').values('date_end', 'access').\
+            annotate(full_name=Concat('user__first_name', Value(' '), 'user__last_name'), user_slug=F('user__slug')).\
+            filter(course__slug=slug).order_by('full_name')
+
+
+class CourseLearnerSwitchAccessAPIView(APIView):
+    serializer_class = CourseLearnersListSerializer
+    permission_classes = (IsSuperuserOrAdministratorOwner,)
+
+    def put(self, request, *args, **kwargs):
+        slug = self.kwargs['slug']
+        user_slug = self.kwargs['user_slug']
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        Permission.objects.filter(course__slug=slug, user__slug=user_slug).update(**serializer.validated_data)
+        return Response(serializer.data, status=status.HTTP_200_OK)

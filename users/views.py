@@ -13,7 +13,7 @@ from courses.models import Permission, Course
 from courses_platform_api.permissions import IsSuperuserOrAdministratorAllOrCuratorReadOnly, IsSuperuser
 from users.choices_types import ProfileRoles
 from users.filters import UsersFilter
-from users.mixin import UserMixin
+from users.mixin import UserMixin, UsersListAdministratorLimitPermissionAPIView
 from users.models import InvitationToken, Lead
 from users.serializers import TokenEmailObtainPairSerializer, RequestEmailSerializer, SecurityCodeSerializer, \
     UserSignUpSerializer, UsersListSerializer, RecoveryPasswordSerializer, UsersListForCuratorSerializer, \
@@ -84,15 +84,15 @@ class UserSignUpAPIView(generics.CreateAPIView):
         User.objects.create_user(**user_data)
 
 
-class UsersListAPIView(generics.ListCreateAPIView):
+class UsersListAPIView(UsersListAdministratorLimitPermissionAPIView, generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = (IsSuperuserOrAdministratorAllOrCuratorReadOnly, )
 
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = UsersFilter
 
-    ordering_fields = ['role', 'courses_list', 'full_name']
-    ordering = ['role', 'courses_list', 'full_name']
+    ordering_fields = ['role', 'full_name']
+    ordering = ['role', 'full_name']
 
     def get_queryset(self):
         if self.request.method == 'GET':
@@ -123,14 +123,6 @@ class UsersListAPIView(generics.ListCreateAPIView):
                 return UsersListForCuratorSerializer
             return UsersListSerializer
         return CreateUserSerializer
-
-    def filter_queryset(self, queryset):
-        queryset = super().filter_queryset(queryset)
-        for backend in list(self.filter_backends):
-            queryset = backend().filter_queryset(self.request, queryset, self)
-        if self.request.user.role == ProfileRoles.ADMINISTRATOR and not self.request.auth['profile_access']:
-            return queryset[:5]
-        return queryset
 
     def perform_create(self, serializer):
         user = User.objects.create_user(**serializer.validated_data)

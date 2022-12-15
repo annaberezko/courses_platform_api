@@ -273,3 +273,86 @@ class CoursesSwitchStatusAPIViewTestCase(APITestCase):
         response = self.client.put(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['is_active'], True)
+
+
+class CourseLearnersListAPIViewTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_superuser(email='super@super.super', password='strong')
+        self.user1 = User.objects.create_user(email='user1@user.com', password='strong', role=ProfileRoles.ADMINISTRATOR)
+        self.user2 = User.objects.create_user(email='user2@user.com', password='strong', role=ProfileRoles.CURATOR)
+        self.user3 = User.objects.create_user(email='user3@user.com', password='strong')
+        self.user4 = User.objects.create_user(email='user4@user.com', password='strong')
+        self.user5 = User.objects.create_user(email='user5@user.com', password='strong')
+        self.user6 = User.objects.create_user(email='user6@user.com', password='strong', first_name="Aaa")
+        self.user7 = User.objects.create_user(email='user7@user.com', password='strong')
+        self.user8 = User.objects.create_user(email='user8@user.com', password='strong')
+        self.user9 = User.objects.create_user(email='user9@user.com', password='strong')
+        self.user10 = User.objects.create_user(email='user10@user.com', password='strong')
+        self.course1 = Course.objects.create(admin=self.user1, name="Course 1")
+
+        self.permission1 = Permission.objects.create(user=self.user3, course=self.course1, access=True)
+        self.permission2 = Permission.objects.create(user=self.user4, course=self.course1, access=True)
+        self.permission3 = Permission.objects.create(user=self.user5, course=self.course1, access=True)
+        self.permission4 = Permission.objects.create(user=self.user6, course=self.course1, access=True)
+        self.permission5 = Permission.objects.create(user=self.user7, course=self.course1)
+        self.permission6 = Permission.objects.create(user=self.user8, course=self.course1)
+
+        self.url = reverse('v1.0:courses:course-learners-list', args=[self.course1.slug])
+
+    def test_course_learners_list_unauthorized_permission_no_access(self):
+        client = APIClient()
+        response = client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_course_learners_list_learner_permission_no_access(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user3@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_course_learners_list_curator_permission_no_access(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user2@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_course_learners_list_administrator_permission(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user1@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 5)
+
+        response = self.client.get(self.url + '?access=True')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 4)
+
+        response = self.client.get(self.url + '?ordering=-full_name')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['results'][0]['full_name'], 'Aaa ')
+
+
+class CourseLearnerSwitchAccessAPIViewTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_superuser(email='super@super.super', password='strong')
+        self.user1 = User.objects.create_user(email='user1@user.com', password='strong', role=ProfileRoles.ADMINISTRATOR)
+        self.user2 = User.objects.create_user(email='user2@user.com', password='strong', role=ProfileRoles.CURATOR)
+        self.user3 = User.objects.create_user(email='user3@user.com', password='strong')
+        self.course1 = Course.objects.create(admin=self.user1, name="Course 1")
+        self.permission1 = Permission.objects.create(user=self.user3, course=self.course1, access=True)
+
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user1@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+
+        self.url = reverse('v1.0:courses:course-learner-switch-status', args=[self.course1.slug, self.user3.slug])
+
+    def test_switch_only_access_status(self):
+        response = self.client.put(self.url, {'access': False})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(Permission.objects.values('access').get(course=self.course1, user=self.user3), False)
+
+        response = self.client.put(self.url, {'access': True, 'date_end': '2025-01-01'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(Permission.objects.values('date_end').get(course=self.course1, user=self.user3), '2025-01-01')
