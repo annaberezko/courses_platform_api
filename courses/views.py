@@ -10,10 +10,12 @@ from rest_framework.views import APIView
 
 from courses.mixins import CourseMixin
 from courses.models import Course, Permission
-from courses.serializers import CoursesListSerializer, CourseSerializer, CourseLearnersListSerializer
+from courses.serializers import CoursesListSerializer, CourseSerializer, CourseLearnersListSerializer, \
+    LearnerCoursesListSerializer
 from courses_platform_api.mixins import ImageMixin
-from courses_platform_api.permissions import IsSuperuserOrAdministratorAllOrCuratorReadOnly, \
-    IsSuperuserAllOrAdministratorActiveCoursesAllOrCuratorActiveCoursesReadOnly, IsSuperuserOrAdministratorOwner
+from courses_platform_api.permissions import \
+    IsSuperuserAllOrAdministratorActiveCoursesAllOrCuratorActiveCoursesReadOnly, IsSuperuserOrAdministratorOwner, \
+    IsSuperuserAllOrAdministratorActiveCoursesAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly
 from users.choices_types import ProfileRoles
 from users.mixin import UsersListAdministratorLimitPermissionAPIView
 
@@ -23,7 +25,7 @@ User = get_user_model()
 class CoursesListAPIView(generics.ListCreateAPIView):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
-    permission_classes = (IsSuperuserOrAdministratorAllOrCuratorReadOnly, )
+    permission_classes = (IsSuperuserAllOrAdministratorActiveCoursesAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly, )
 
     def get_queryset(self):
         if self.request.method == 'GET':
@@ -36,6 +38,8 @@ class CoursesListAPIView(generics.ListCreateAPIView):
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
+            if self.request.user.role == ProfileRoles.LEARNER:
+                return LearnerCoursesListSerializer
             return CoursesListSerializer
         return super().get_serializer_class()
 

@@ -15,6 +15,14 @@ class CoursesListSerializer(CourseSerializer):
     admin = serializers.CharField()
 
 
+class LearnerCoursesListSerializer(CoursesListSerializer):
+    access = serializers.BooleanField()
+    date_end = serializers.DateField()
+
+    class Meta(CoursesListSerializer.Meta):
+        fields = ('slug', 'name', 'admin', 'cover', 'description', 'price', 'access', 'date_end')
+
+
 class CourseLearnersListSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(read_only=True)
     user_slug = serializers.CharField(read_only=True)

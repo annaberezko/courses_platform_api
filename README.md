@@ -13,11 +13,17 @@ Can have a few administrators.
 See only courses and members of administrators with access. In other case doesn't see any courses and users of this administrator.
 Has permission to review his courses, learners with access to these courses without contact information, and check home tasks
 ### Learner 
-Can sign up, has permission to review his courses and do home tasks to them
+Can sign up, subscribe for courses, has permission to review his courses and do home tasks to them
+When a learner subscribes to a course, they get access = False as default. He sees only lessons with free access status = True.
+Administrator-owner of this course or superuser can change the learner permission to True.
+
 
 Permission for Curator and Learner:
 * If date_end is Null, permission unlimited
 * Giving accesses to different courses by course id
+
+### Lessons
+Has free access status. If it's True, then learners can see it without permission. 
 
 ## Tech details
 
