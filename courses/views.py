@@ -13,9 +13,8 @@ from courses.models import Course, Permission
 from courses.serializers import CoursesListSerializer, CourseSerializer, CourseLearnersListSerializer, \
     LearnerCoursesListSerializer
 from courses_platform_api.mixins import ImageMixin
-from courses_platform_api.permissions import \
-    IsSuperuserAllOrAdministratorActiveCoursesAllOrCuratorActiveCoursesReadOnly, IsSuperuserOrAdministratorOwner, \
-    IsSuperuserAllOrAdministratorActiveCoursesAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly
+from courses_platform_api.permissions import IsSuperuserOrAdministratorOwner, \
+    IsSuperuserAllOrAdministratorOwnerAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly
 from users.choices_types import ProfileRoles
 from users.mixin import UsersListAdministratorLimitPermissionAPIView
 
@@ -25,7 +24,7 @@ User = get_user_model()
 class CoursesListAPIView(generics.ListCreateAPIView):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
-    permission_classes = (IsSuperuserAllOrAdministratorActiveCoursesAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly, )
+    permission_classes = (IsSuperuserAllOrAdministratorOwnerAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly, )
 
     def get_queryset(self):
         if self.request.method == 'GET':
@@ -61,7 +60,7 @@ class CoursesListAPIView(generics.ListCreateAPIView):
 
 class CourseAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Course.objects.all()
-    permission_classes = (IsSuperuserAllOrAdministratorActiveCoursesAllOrCuratorActiveCoursesReadOnly, )
+    permission_classes = (IsSuperuserAllOrAdministratorOwnerAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly, )
     serializer_class = CourseSerializer
     lookup_field = 'slug'
 

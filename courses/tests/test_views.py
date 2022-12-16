@@ -166,8 +166,8 @@ class CourseAPIViewTestCase(APITestCase):
         self.course4 = Course.objects.create(admin=self.user1, name="Course 4")
         self.course5 = Course.objects.create(admin=self.user2, name="Course 5", is_active=False)
 
-        # self.permission1 = Permission.objects.create(user=self.user6, course=self.course1, access=True)
-        # self.permission2 = Permission.objects.create(user=self.user6, course=self.course2)
+        self.permission1 = Permission.objects.create(user=self.user6, course=self.course1, access=True)
+        self.permission2 = Permission.objects.create(user=self.user6, course=self.course5, access=True)
 
         self.url = reverse('v1.0:courses:course-detail', args=[self.course1.slug])
         self.data = {
@@ -179,22 +179,22 @@ class CourseAPIViewTestCase(APITestCase):
         response = client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    # def test_course_detail_page_learner_permission_put_delete_method_no_access(self):
-    #     res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user6@user.com', 'password': 'strong'})
-    #     self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
-    #     response = self.client.patch(self.url)
-    #     self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-    #     response = self.client.delete(self.url)
-    #     self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+    def test_course_detail_page_learner_permission_put_delete_method_no_access(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user6@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.patch(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
     #
-    # def test_course_detail_page_learner_permission_get_method_accesses(self):
-    #     res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user6@user.com', 'password': 'strong'})
-    #     self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
-    #     response = self.client.get(self.url)
-    #     self.assertEqual(response.status_code, status.HTTP_200_OK)
-    #     self.assertEqual(response.data['count'], 2)
-    #     self.assertTrue(response.data['results'][0]['access'])
-    #     self.assertFalse(response.data['results'][1]['access'])
+    def test_course_detail_page_learner_permission_get_method_accesses(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user6@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.url = reverse('v1.0:courses:course-detail', args=[self.course5.slug])
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_course_detail_page_curator_permission_put_delete_method_no_access(self):
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user4@user.com', 'password': 'strong'})

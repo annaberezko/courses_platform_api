@@ -1,22 +1,24 @@
 ## Platform for educational courses
 
 ### Superuser 
-Administrate all users and data, can create administrators and curators
+Administrate all users and data, can create administrators and curators.
 ### Administrator 
-Can create courses, curators, administrate them, and see his learners
-When permission access=False, Administrator has limitation:
+Can create courses, curators, administrate them, and see his learners.
+See list of his courses, and change is_active status of them.
+When administrator's status to the platform changes to False, all of his courses, except the oldest one, change their status to is_active=False.
+When administrator's access=False, he has limitation:
 * Can create only one course
+* Can turn on is_active=True only one course
 * Can't create curator
 * See only 5 learners
 ### Curator 
 Can have a few administrators. 
 See only courses and members of administrators with access. In other case doesn't see any courses and users of this administrator.
-Has permission to review his courses, learners with access to these courses without contact information, and check home tasks
+Has permission to review his courses, learners who subscribed in these courses (only names, without contact information), and check home tasks.
 ### Learner 
-Can sign up, subscribe for courses, has permission to review his courses and do home tasks to them
-When a learner subscribes to a course, they get access = False as default. He sees only lessons with free access status = True.
+Can sign up, subscribe for courses, has permission to review his courses and do home tasks to them.
+When a learner subscribes to a course, they get access = False as default, in this case he sees only lessons with free access status = True.
 Administrator-owner of this course or superuser can change the learner permission to True.
-
 
 Permission for Curator and Learner:
 * If date_end is Null, permission unlimited
