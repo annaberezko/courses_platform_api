@@ -26,6 +26,9 @@ class CoursesListAPIView(generics.ListCreateAPIView):
     serializer_class = CourseSerializer
     permission_classes = (IsSuperuserAllOrAdministratorOwnerAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly, )
 
+    filter_backends = [OrderingFilter]
+    ordering_fields = ['name']
+    ordering = ['name']
 
     def get_queryset(self):
         if self.request.method == 'GET':

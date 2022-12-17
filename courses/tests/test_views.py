@@ -59,8 +59,8 @@ class CoursesListAPIViewTestCase(APITestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 2)
-        self.assertEqual(response.data['results'][0]['access'], False)
-        self.assertEqual(response.data['results'][1]['access'], True)
+        self.assertEqual(response.data['results'][0]['access'], True)
+        self.assertEqual(response.data['results'][1]['access'], False)
 
     def test_courses_list_superuser_see_all_courses(self):
         response = self.client.get(self.url)
