@@ -13,7 +13,7 @@ User = get_user_model()
 class CoursesListAPIViewTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
-        self.url = reverse('v1.0:courses:courses-list')
+        self.url = reverse('v1.0:courses:course-list')
         self.user = User.objects.create_superuser(email='super@super.super', password='strong')
         self.user1 = User.objects.create_user(email='user1@user.com', password='strong', role=ProfileRoles.ADMINISTRATOR)
         self.user2 = User.objects.create_user(email='user2@user.com', password='strong', role=ProfileRoles.ADMINISTRATOR)
@@ -325,7 +325,7 @@ class CourseLearnersListAPIViewTestCase(APITestCase):
         self.permission5 = Permission.objects.create(user=self.user7, course=self.course1)
         self.permission6 = Permission.objects.create(user=self.user8, course=self.course1)
 
-        self.url = reverse('v1.0:courses:course-learners-list', args=[self.course1.slug])
+        self.url = reverse('v1.0:courses:course-learner-list', args=[self.course1.slug])
 
     def test_course_learners_list_unauthorized_permission_no_access(self):
         client = APIClient()

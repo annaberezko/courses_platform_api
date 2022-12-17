@@ -269,7 +269,7 @@ class UserSignUpAPIViewTestCase(APITestCase):
 class UsersListAPIViewTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
-        self.url = reverse('v1.0:users:users-list')
+        self.url = reverse('v1.0:users:user-list')
         self.user = User.objects.create_superuser(email='super@super.super', password='strong')
         self.user1 = User.objects.create_superuser(email='user1@user.com', password='strong')
         self.user2 = User.objects.create_user(email='user2@user.com', password='strong', role=ProfileRoles.ADMINISTRATOR)
@@ -430,7 +430,7 @@ class UsersListAPIViewTestCase(APITestCase):
 class RolesListAPIViewTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
-        self.url = reverse('v1.0:users:roles-list')
+        self.url = reverse('v1.0:users:role-list')
         self.user = User.objects.create_superuser(email='super@super.super', password='strong')
         self.user2 = User.objects.create_user(email='user2@user.com', password='strong', role=ProfileRoles.ADMINISTRATOR)
         self.user3 = User.objects.create_user(email='user3@user.com', password='strong', role=ProfileRoles.CURATOR)
@@ -475,7 +475,7 @@ class RolesListAPIViewTestCase(APITestCase):
 class AdministratorsListAPIViewTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
-        self.url = reverse('v1.0:users:administrators-list')
+        self.url = reverse('v1.0:users:administrator-list')
         self.user = User.objects.create_superuser(email='super@super.super', password='strong')
         self.user1 = User.objects.create_user(email='user1@user.com', password='strong', role=ProfileRoles.ADMINISTRATOR)
         self.user2 = User.objects.create_user(email='user2@user.com', password='strong', role=ProfileRoles.ADMINISTRATOR)

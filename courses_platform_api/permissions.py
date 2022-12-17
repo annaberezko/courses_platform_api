@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 
 from rest_framework.permissions import IsAuthenticated, SAFE_METHODS
 
-from courses.models import Course
+from courses.models import Course, Permission
 from users.choices_types import ProfileRoles
 User = get_user_model()
 
@@ -32,7 +32,7 @@ class IsSuperuserOrAdministratorOrCurator(IsAuthenticated):
         ))
 
 
-class IsSuperuserOrAdministratorOwner(IsAuthenticated):
+class IsSuperuserOrOwner(IsAuthenticated):
     def has_permission(self, request, view):
         perm = super().has_permission(request, view)
         slug = request.resolver_match.kwargs['slug']
@@ -70,8 +70,17 @@ class IsSuperuserAllOrAdministratorActiveCoursesAllOrCuratorActiveCoursesReadOnl
         ))
 
 
-class IsSuperuserAllOrAdministratorOwnerAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly(IsAuthenticated):
+class IsSuperuserAllOrOwnerAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly(IsAuthenticated):
     def has_permission(self, request, view):
+        """
+        For list of courses we use has_permission
+        For list of lessons we use has_object_permission
+        """
+        if 'slug' in view.kwargs:
+            slug = view.kwargs['slug']
+            course = Course.objects.get(slug=slug)
+            return self.has_object_permission(request, view, course)
+
         perm = super().has_permission(request, view)
         return bool(perm and (
                 request.user.role in (ProfileRoles.SUPERUSER, ProfileRoles.ADMINISTRATOR) or
@@ -85,4 +94,30 @@ class IsSuperuserAllOrAdministratorOwnerAllOrCuratorActiveCoursesReadOnlyLearner
                 (request.user.role == ProfileRoles.ADMINISTRATOR and obj.admin == request.user and obj.is_active) or
                 (request.user.role in (ProfileRoles.LEARNER, ProfileRoles.CURATOR) and request.method in SAFE_METHODS
                  and obj.is_active)
+        ))
+
+
+class LessonPermission(IsAuthenticated):
+    """
+    Superuser see and edit all permissions
+    Administrator owner see and edit all lessons, when course is_active = True
+    Curator read only, when course is_active = True
+    Learner read only, when course is_active = True and lesson free_access = True
+    or learner permission to this course access = True
+    """
+    def has_object_permission(self, request, view, obj):
+        perm = super().has_permission(request, view)
+        role = request.user.role
+        slug = view.kwargs['slug']
+        course = Course.objects.get(slug=slug)
+
+        if role == ProfileRoles.LEARNER:
+            course_permission = Permission.objects.filter(course=course, user=request.user, access=True).exists()
+            learner_access = course_permission or obj['free_access']
+
+        return bool(perm and (
+                role == ProfileRoles.SUPERUSER or
+                (role == ProfileRoles.ADMINISTRATOR and course.admin == request.user and course.is_active) or
+                (role == ProfileRoles.CURATOR and request.method in SAFE_METHODS and course.is_active) or
+                (role == ProfileRoles.LEARNER and request.method in SAFE_METHODS and learner_access)
         ))

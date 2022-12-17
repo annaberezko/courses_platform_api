@@ -20,11 +20,11 @@ class Lesson(models.Model):
     tests_task = models.BooleanField(default=False)
 
 
-class Materials(models.Model):
+class Material(models.Model):
     def file_path(self, filename):
         return "media/%s/courses/%s/%s" % (self.lesson.course.admin.slug, self.lesson.course.slug, filename)
 
-    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='materials')
     file = models.FileField(upload_to=file_path, validators=[FileExtensionValidator(FILES_EXTENSIONS), validate_size])
 
 
