@@ -13,6 +13,7 @@ class Lesson(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     free_access = models.BooleanField(default=False)
     name = models.CharField('lesson name', max_length=40)
+    description = models.TextField('description', null=True, blank=True)
     video = models.CharField('video link', max_length=100, null=True, blank=True)
     text = models.TextField('text', null=True, blank=True)
     home_task = models.TextField(null=True, blank=True)

@@ -26,6 +26,7 @@ class CoursesListAPIView(generics.ListCreateAPIView):
     serializer_class = CourseSerializer
     permission_classes = (IsSuperuserAllOrAdministratorOwnerAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly, )
 
+
     def get_queryset(self):
         if self.request.method == 'GET':
             pk = self.request.user.pk
@@ -60,8 +61,8 @@ class CoursesListAPIView(generics.ListCreateAPIView):
 
 class CourseAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Course.objects.all()
-    permission_classes = (IsSuperuserAllOrAdministratorOwnerAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly, )
     serializer_class = CourseSerializer
+    permission_classes = (IsSuperuserAllOrAdministratorOwnerAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly, )
     lookup_field = 'slug'
 
     def perform_update(self, serializer):
