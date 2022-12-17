@@ -7,3 +7,10 @@ class LessonsListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lesson
         fields = ('id', 'name', 'description')
+
+
+class LessonSerializer(LessonsListSerializer):
+    materials_list = serializers.CharField(read_only=True)
+
+    class Meta(LessonsListSerializer.Meta):
+        fields = ('free_access', 'name', 'video', 'text', 'home_task', 'materials_list')

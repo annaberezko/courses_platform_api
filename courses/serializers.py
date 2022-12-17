@@ -29,4 +29,4 @@ class CourseLearnersListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Permission
-        fields = ['user_slug', 'full_name', 'date_end', 'access']
+        fields = ('user_slug', 'full_name', 'date_end', 'access')

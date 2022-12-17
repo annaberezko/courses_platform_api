@@ -32,7 +32,7 @@ class RequestEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(min_length=2)
 
     class Meta:
-        fields = ["email"]
+        fields = ("email")
 
 
 class SecurityCodeSerializer(serializers.Serializer):
@@ -40,7 +40,7 @@ class SecurityCodeSerializer(serializers.Serializer):
     security_code = serializers.CharField(min_length=6, max_length=6)
 
     class Meta:
-        fields = ["email", "security_code"]
+        fields = ("email", "security_code")
 
 
 class RecoveryPasswordSerializer(serializers.Serializer):
@@ -49,7 +49,7 @@ class RecoveryPasswordSerializer(serializers.Serializer):
     confirm_password = serializers.CharField(min_length=2, write_only=True, required=True)
 
     class Meta:
-        fields = ['password', 'confirm_password']
+        fields = ('password', 'confirm_password')
 
     def validate(self, attr):
         if attr['password'] != attr['confirm_password']:
@@ -74,7 +74,7 @@ class UserSignUpSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['email', 'first_name', 'last_name', 'password', 'confirm_password']
+        fields = ('email', 'first_name', 'last_name', 'password', 'confirm_password')
 
     def validate(self, attrs):
         if attrs['password'] != attrs['confirm_password']:
@@ -87,7 +87,7 @@ class CreateUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['role', 'first_name', 'last_name', 'email', 'phone', 'instagram', 'facebook', 'curator_lead']
+        fields = ('role', 'first_name', 'last_name', 'email', 'phone', 'instagram', 'facebook', 'curator_lead')
 
 
 class UserCoursesListSerializer(serializers.ModelSerializer):
@@ -106,7 +106,8 @@ class UsersListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['slug', 'role', 'full_name', 'email', 'phone', 'instagram', 'facebook', 'last_login', 'date_joined', 'courses_list']
+        fields = ('slug', 'role', 'full_name', 'email', 'phone', 'instagram', 'facebook', 'last_login',
+                  'date_joined', 'courses_list')
 
     def get_role(self, obj):
         role = obj['role'] if type(obj) is dict else obj.role
@@ -115,7 +116,7 @@ class UsersListSerializer(serializers.ModelSerializer):
 
 class UsersListForCuratorSerializer(UsersListSerializer):
     class Meta(UsersListSerializer.Meta):
-        fields = ['slug', 'role', 'full_name', 'last_login', 'date_joined', 'courses_list']
+        fields = ('slug', 'role', 'full_name', 'last_login', 'date_joined', 'courses_list')
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -130,7 +131,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        exclude = ['id', 'password', 'security_code']
+        exclude = ('id', 'password', 'security_code')
 
     def get_role(self, obj):
         role = obj['role'] if type(obj) is dict else obj.role

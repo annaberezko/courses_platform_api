@@ -7,9 +7,9 @@ from users.views import ResetPasswordRequestEmailAPIView, ResetPasswordSecurityC
 app_name = 'users'
 
 urlpatterns = [
-    path('', UsersListAPIView.as_view(), name='users-list'),
-    path('roles-list/', RolesListAPIView.as_view(), name='roles-list'),
-    path('administrators-list/', AdministratorsListAPIView.as_view(), name='administrators-list'),
+    path('', UsersListAPIView.as_view(), name='user-list'),
+    path('roles/', RolesListAPIView.as_view(), name='role-list'),
+    path('administrators/', AdministratorsListAPIView.as_view(), name='administrator-list'),
     path('sign-up/', UserSignUpAPIView.as_view(), name='sign-up'),
     path('forgot-password/', ResetPasswordRequestEmailAPIView.as_view(), name='forgot-password'),
     path('security-code/', ResetPasswordSecurityCodeAPIView.as_view(), name='security-code'),

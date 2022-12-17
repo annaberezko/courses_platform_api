@@ -13,8 +13,8 @@ from courses.models import Course, Permission
 from courses.serializers import CoursesListSerializer, CourseSerializer, CourseLearnersListSerializer, \
     LearnerCoursesListSerializer
 from courses_platform_api.mixins import ImageMixin
-from courses_platform_api.permissions import IsSuperuserOrAdministratorOwner, \
-    IsSuperuserAllOrAdministratorOwnerAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly
+from courses_platform_api.permissions import IsSuperuserOrOwner, \
+    IsSuperuserAllOrOwnerAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly
 from users.choices_types import ProfileRoles
 from users.mixin import UsersListAdministratorLimitPermissionAPIView
 
@@ -24,7 +24,7 @@ User = get_user_model()
 class CoursesListAPIView(generics.ListCreateAPIView):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
-    permission_classes = (IsSuperuserAllOrAdministratorOwnerAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly, )
+    permission_classes = (IsSuperuserAllOrOwnerAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly, )
 
     filter_backends = [OrderingFilter]
     ordering_fields = ['name']
@@ -65,7 +65,7 @@ class CoursesListAPIView(generics.ListCreateAPIView):
 class CourseAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
-    permission_classes = (IsSuperuserAllOrAdministratorOwnerAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly, )
+    permission_classes = (IsSuperuserAllOrOwnerAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly, )
     lookup_field = 'slug'
 
     def perform_update(self, serializer):
@@ -91,7 +91,7 @@ class CoursesShortListAPIView(APIView):
 
 class CoursesSwitchStatusAPIView(generics.UpdateAPIView):
     queryset = Course.objects.all()
-    permission_classes = (IsSuperuserOrAdministratorOwner, )
+    permission_classes = (IsSuperuserOrOwner, )
     lookup_field = 'slug'
 
     def put(self, request, *args, **kwargs):
@@ -112,7 +112,7 @@ class CoursesSwitchStatusAPIView(generics.UpdateAPIView):
 
 class CourseLearnersListAPIView(UsersListAdministratorLimitPermissionAPIView):
     serializer_class = CourseLearnersListSerializer
-    permission_classes = (IsSuperuserOrAdministratorOwner, )
+    permission_classes = (IsSuperuserOrOwner, )
 
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_fields = ['access']
@@ -128,7 +128,7 @@ class CourseLearnersListAPIView(UsersListAdministratorLimitPermissionAPIView):
 
 class CourseLearnerSwitchAccessAPIView(APIView):
     serializer_class = CourseLearnersListSerializer
-    permission_classes = (IsSuperuserOrAdministratorOwner,)
+    permission_classes = (IsSuperuserOrOwner, )
 
     def put(self, request, *args, **kwargs):
         slug = self.kwargs['slug']
