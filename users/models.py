@@ -10,7 +10,7 @@ from rest_framework.authtoken.models import Token
 
 from courses_platform_api.mixins import GeneratorMixin
 from courses_platform_api.settings import EMAIL_HOST_USER, FRONT_END_NEW_PASSWORD_URL
-from users.choices_types import ProfileRoles
+from courses_platform_api.choices_types import ProfileRoles
 from users.managers import UserManager
 
 

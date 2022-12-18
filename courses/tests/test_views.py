@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
 
 from courses.models import Course, Permission
-from users.choices_types import ProfileRoles
+from courses_platform_api.choices_types import ProfileRoles
 from users.models import Lead
 
 User = get_user_model()

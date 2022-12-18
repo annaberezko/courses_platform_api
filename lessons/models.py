@@ -17,6 +17,7 @@ class Lesson(models.Model):
     video = models.CharField('video link', max_length=100, null=True, blank=True)
     text = models.TextField('text', null=True, blank=True)
     home_task = models.TextField(null=True, blank=True)
+    test = models.BooleanField(default=False)
 
 
 class Material(models.Model):

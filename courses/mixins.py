@@ -1,7 +1,7 @@
 from django.db.models import OuterRef, Subquery
 
 from courses.models import Permission
-from users.choices_types import ProfileRoles
+from courses_platform_api.choices_types import ProfileRoles
 from users.models import Lead
 
 

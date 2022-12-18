@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase
 
-from ..choices_types import ProfileRoles
+from courses_platform_api.choices_types import ProfileRoles
 
 User = get_user_model()
 

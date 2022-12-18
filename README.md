@@ -25,7 +25,8 @@ Permission for Curator and Learner:
 * Giving accesses to different courses by course id
 
 ### Lessons
-Has free access status. If it's True, then learners can see it without permission. 
+Lesson free access status. If it's True, then learners can see it without access. 
+If lesson have test=True, then administrator can create one test to this lesson, check the answers can administrator or curator.
 
 ## Tech details
 

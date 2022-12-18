@@ -15,7 +15,7 @@ from courses.serializers import CoursesListSerializer, CourseSerializer, CourseL
 from courses_platform_api.mixins import ImageMixin
 from courses_platform_api.permissions import IsSuperuserOrOwner, \
     IsSuperuserAllOrOwnerAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly
-from users.choices_types import ProfileRoles
+from courses_platform_api.choices_types import ProfileRoles
 from users.mixin import UsersListAdministratorLimitPermissionAPIView
 
 User = get_user_model()
