@@ -49,10 +49,10 @@ class Task(models.Model):
 class ImageTask(models.Model):
     def file_path(self, filename):
         return "media/%s/courses/%s/homeworks/%s/%s/%s_%s" % (
-            self.admin.slug,
-            self.course.slug,
-            self.task__lesson__id,
-            self.task__user__slug,
+            self.task.lesson.course.admin.slug,
+            self.task.lesson.course.slug,
+            self.task.lesson.id,
+            self.task.user,
             str(time.time()), filename)
 
     register.generator('tasks:thumbnail', ImageThumbnail)

@@ -1,3 +1,5 @@
+import time
+
 from django.contrib.auth import get_user_model
 from django.core.validators import FileExtensionValidator
 from django.db import models
@@ -23,7 +25,12 @@ class Lesson(models.Model):
 
 class Material(models.Model):
     def file_path(self, filename):
-        return "media/%s/courses/%s/%s" % (self.lesson.course.admin.slug, self.lesson.course.slug, filename)
+        return "media/%s/courses/%s/%s_%s" % (
+            self.lesson.course.admin.slug,
+            self.lesson.course.slug,
+            str(time.time()),
+            filename
+        )
 
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='materials')
     file = models.FileField(upload_to=file_path, validators=[FileExtensionValidator(FILES_EXTENSIONS), validate_size])
