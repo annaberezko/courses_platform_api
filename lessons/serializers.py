@@ -17,6 +17,7 @@ class LessonSerializer(LessonsListSerializer):
 
 
 class MaterialSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Material
         fields = ('file', )

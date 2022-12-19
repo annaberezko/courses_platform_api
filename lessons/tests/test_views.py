@@ -139,12 +139,3 @@ class LessonAPIViewTestCase(LessonInitialMixin):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response = self.client.put(self.url, self.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-
-class MaterialAPIViewTestCase(LessonInitialMixin):
-    def setUp(self):
-        super().setUp()
-        self.url = reverse('v1.0:courses:lessons:add-material', args=[self.course1.slug, self.lesson1.pk])
-        self.data = {
-            'file': 'file.pdf',
-        }
