@@ -11,6 +11,7 @@ User = get_user_model()
 
 class Lesson(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    sort = models.SmallIntegerField(null=True, blank=True)
     free_access = models.BooleanField(default=False)
     name = models.CharField('lesson name', max_length=40)
     description = models.TextField('description', null=True, blank=True)

@@ -17,6 +17,11 @@ class LessonsListAPIView(generics.ListCreateAPIView):
         course = Course.objects.get(slug=slug)
         return Lesson.objects.filter(course=course)
 
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return LessonSerializer
+        return self.serializer_class
+
 
 class LessonAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Lesson.objects.all()
@@ -25,5 +30,6 @@ class LessonAPIView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         pk = self.kwargs['pk']
+
         return Lesson.objects.values('free_access', 'name', 'video', 'text', 'home_task').\
             annotate(materials_list=ArrayAgg('materials__file')).filter(pk=pk)

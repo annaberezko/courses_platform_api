@@ -17,6 +17,7 @@ from courses_platform_api.permissions import IsSuperuserOrOwner, \
     IsSuperuserAllOrOwnerAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly
 from courses_platform_api.choices_types import ProfileRoles
 from users.mixin import UsersListAdministratorLimitPermissionAPIView
+from users.models import Lead
 
 User = get_user_model()
 
@@ -108,6 +109,22 @@ class CoursesSwitchStatusAPIView(generics.UpdateAPIView):
             return Response(status=status.HTTP_403_FORBIDDEN)
         instance.switch_status()
         return Response({'is_active': instance.is_active}, status=status.HTTP_200_OK)
+
+
+class CourseCuratorsListAPIView(APIView):
+    permission_classes = (IsSuperuserOrOwner, )
+
+    def get(self, request, *args, **kwargs):
+        slug = self.kwargs['slug']
+        if admin := Course.objects.values_list('admin').filter(slug=slug, is_active=True)[0][0]:
+
+            curators_list = Lead.objects.select_related('user').filter(lead_id=admin).annotate(
+                slug=F('user__slug'),
+                full_name=Concat('user__first_name', Value(' '), 'user__last_name')
+            ).values('slug', 'full_name')
+
+            return Response({'curators_list': curators_list}, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class CourseLearnersListAPIView(UsersListAdministratorLimitPermissionAPIView):
