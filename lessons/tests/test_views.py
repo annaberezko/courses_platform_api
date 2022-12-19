@@ -35,13 +35,6 @@ class LessonInitialMixin(APITestCase):
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
 
-    def test_lessons_list_unauthorized_permission_no_access(self):
-        client = APIClient()
-        response = client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        response = client.post(self.url)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-
 
 class LessonsListAPIViewTestCase(LessonInitialMixin):
     def setUp(self):
@@ -53,6 +46,13 @@ class LessonsListAPIViewTestCase(LessonInitialMixin):
 
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+
+    def test_lessons_list_unauthorized_permission_no_access(self):
+        client = APIClient()
+        response = client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        response = client.post(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_lessons_list_learner_permission_post_method_no_access(self):
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user5@user.com', 'password': 'strong'})
@@ -101,6 +101,13 @@ class LessonAPIViewTestCase(LessonInitialMixin):
             'home_task': 'Task detail text'
         }
 
+    def test_lesson_unauthorized_permission_no_access(self):
+        client = APIClient()
+        response = client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        response = client.post(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
     def test_lesson_learner_permission_post_method_no_access(self):
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user5@user.com', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
@@ -132,4 +139,3 @@ class LessonAPIViewTestCase(LessonInitialMixin):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response = self.client.put(self.url, self.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(Lesson.objects.values('name').get(pk=self.course1.pk)['name'], self.data['name'])
