@@ -165,7 +165,7 @@ class AdministratorsListAPIView(APIView):
     permission_classes = (IsSuperuser, )
 
     def get(self, request, *args, **kwargs):
-        administrators = User.objects.values('slug').annotate(full_name=Concat('first_name', Value(' '), 'last_name')).\
+        administrators = User.objects.values('id').annotate(full_name=Concat('first_name', Value(' '), 'last_name')).\
             filter(role=ProfileRoles.ADMINISTRATOR)
         return Response({'data': list(administrators)}, status=status.HTTP_200_OK)
 

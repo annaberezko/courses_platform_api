@@ -34,7 +34,6 @@ class CoursesListAPIViewTestCase(APITestCase):
         self.permission1 = Permission.objects.create(user=self.user6, course=self.course1, access=True)
         self.permission2 = Permission.objects.create(user=self.user6, course=self.course2)
 
-
         self.data = {
             'name': 'New Course'
         }

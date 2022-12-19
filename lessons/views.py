@@ -22,6 +22,11 @@ class LessonsListAPIView(generics.ListCreateAPIView):
             return LessonSerializer
         return self.serializer_class
 
+    def perform_create(self, serializer):
+        slug = self.kwargs['slug']
+        if course := Course.objects.get(slug=slug):
+            Lesson.objects.create(**serializer.validated_data, course=course)
+
 
 class LessonAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Lesson.objects.all()
@@ -29,7 +34,8 @@ class LessonAPIView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = (LessonPermission, )
 
     def get_queryset(self):
-        pk = self.kwargs['pk']
-
-        return Lesson.objects.values('free_access', 'name', 'video', 'text', 'home_task').\
-            annotate(materials_list=ArrayAgg('materials__file')).filter(pk=pk)
+        if self.request.method == 'GET':
+            pk = self.kwargs['pk']
+            return Lesson.objects.values('free_access', 'name', 'video', 'text', 'home_task').\
+                annotate(materials_list=ArrayAgg('materials__file')).filter(pk=pk)
+        return super().get_queryset()
