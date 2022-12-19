@@ -1,6 +1,6 @@
 from django.contrib.auth.base_user import BaseUserManager
 
-from users.choices_types import ProfileRoles
+from courses_platform_api.choices_types import ProfileRoles
 
 
 class UserManager(BaseUserManager):

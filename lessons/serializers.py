@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from lessons.models import Lesson
+from lessons.models import Lesson, Material
 
 
 class LessonsListSerializer(serializers.ModelSerializer):
@@ -14,3 +14,10 @@ class LessonSerializer(LessonsListSerializer):
 
     class Meta(LessonsListSerializer.Meta):
         fields = ('free_access', 'name', 'video', 'text', 'home_task', 'materials_list')
+
+
+class MaterialSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Material
+        fields = ('file', )

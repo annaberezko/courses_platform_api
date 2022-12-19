@@ -11,7 +11,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from courses.models import Permission, Course
 from courses_platform_api.permissions import IsSuperuserOrAdministratorAllOrCuratorReadOnly, IsSuperuser
-from users.choices_types import ProfileRoles
+from courses_platform_api.choices_types import ProfileRoles
 from users.filters import UsersFilter
 from users.mixin import UserMixin, UsersListAdministratorLimitPermissionAPIView
 from users.models import InvitationToken, Lead
@@ -165,7 +165,7 @@ class AdministratorsListAPIView(APIView):
     permission_classes = (IsSuperuser, )
 
     def get(self, request, *args, **kwargs):
-        administrators = User.objects.values('slug').annotate(full_name=Concat('first_name', Value(' '), 'last_name')).\
+        administrators = User.objects.values('id').annotate(full_name=Concat('first_name', Value(' '), 'last_name')).\
             filter(role=ProfileRoles.ADMINISTRATOR)
         return Response({'data': list(administrators)}, status=status.HTTP_200_OK)
 

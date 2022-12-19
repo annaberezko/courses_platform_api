@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
 
 from courses.models import Course, Permission
-from users.choices_types import ProfileRoles
+from courses_platform_api.choices_types import ProfileRoles
 from users.models import Lead
 
 User = get_user_model()
@@ -33,7 +33,6 @@ class CoursesListAPIViewTestCase(APITestCase):
 
         self.permission1 = Permission.objects.create(user=self.user6, course=self.course1, access=True)
         self.permission2 = Permission.objects.create(user=self.user6, course=self.course2)
-
 
         self.data = {
             'name': 'New Course'
@@ -114,13 +113,13 @@ class CoursesListAPIViewTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_superuser_create_new_course(self):
-        self.data.update({'admin': self.user3.id})
+        self.data.update({'admin_id': self.user3.id})
         response = self.client.post(self.url, self.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_superuser_create_new_course_with_all_data(self):
         self.data.update({
-            'admin': self.user3.id,
+            'admin_id': self.user3.id,
             'cover': "",
             'description': 'Course description',
             'sequence': True
@@ -131,7 +130,7 @@ class CoursesListAPIViewTestCase(APITestCase):
     def test_administrator_create_many_courses_if_he_is_active(self):
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user1@user.com', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
-        self.data.update({'admin': self.user1.id})
+        self.data.update({'admin_id': self.user1.id})
         response = self.client.post(self.url, self.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         response = self.client.post(self.url, self.data)
@@ -140,7 +139,7 @@ class CoursesListAPIViewTestCase(APITestCase):
     def test_administrator_create_only_one_course_if_he_is_not_active(self):
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user3@user.com', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
-        self.data.update({'admin': self.user3.id})
+        self.data.update({'admin_id': self.user3.id})
         response = self.client.post(self.url, self.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         response = self.client.post(self.url, self.data)

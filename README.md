@@ -17,7 +17,8 @@ See only courses and members of administrators with access. In other case doesn'
 Has permission to review his courses, learners who subscribed in these courses (only names, without contact information), and check home tasks.
 ### Learner 
 Can sign up, subscribe for courses, has permission to review his courses and do home tasks to them.
-When a learner subscribes to a course, they get access = False as default, in this case he sees only lessons with free access status = True.
+When a learner subscribes to a course, they get access = False as default, in this case he sees all list of lessons, 
+and detail pages only lessons with status free_access = True.
 Administrator-owner of this course or superuser can change the learner permission to True.
 
 Permission for Curator and Learner:
@@ -25,7 +26,8 @@ Permission for Curator and Learner:
 * Giving accesses to different courses by course id
 
 ### Lessons
-Has free access status. If it's True, then learners can see it without permission. 
+Lesson free access status. If it's True, then learners can see it without access. 
+If lesson have test=True, then administrator can create one test to this lesson, check the answers can administrator or curator.
 
 ## Tech details
 

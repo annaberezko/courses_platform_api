@@ -4,7 +4,7 @@ from django.db.models.functions import JSONObject, Concat
 from rest_framework import generics
 
 from courses.models import Permission
-from users.choices_types import ProfileRoles
+from courses_platform_api.choices_types import ProfileRoles
 
 
 class UserMixin:
