@@ -15,9 +15,9 @@ from courses_platform_api.choices_types import ProfileRoles
 from users.filters import UsersFilter
 from users.mixin import UserMixin, UsersListAdministratorLimitPermissionAPIView
 from users.models import InvitationToken, Lead
-from users.serializers import TokenEmailObtainPairSerializer, RequestEmailSerializer, SecurityCodeSerializer, \
+from users.serializers import RequestEmailSerializer, SecurityCodeSerializer, \
     UserSignUpSerializer, UsersListSerializer, RecoveryPasswordSerializer, UsersListForCuratorSerializer, \
-    CreateUserSerializer, UserSerializer
+    CreateUserSerializer, UserSerializer, TokenEmailObtainPairSerializer
 
 User = get_user_model()
 

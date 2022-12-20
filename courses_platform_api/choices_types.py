@@ -1,3 +1,15 @@
+class AuthProvider:
+    EMAIL = 1
+    GOOGLE = 2
+    FACEBOOK = 3
+
+    CHOICES = [
+        (EMAIL, 'email'),
+        (GOOGLE, 'google'),
+        (FACEBOOK, 'facebook'),
+    ]
+
+
 class ProfileRoles:
     SUPERUSER = 1
     ADMINISTRATOR = 2

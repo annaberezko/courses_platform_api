@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'django_filters',
     'users',
+    'social_auth',
     'courses',
     'lessons',
     'tasks',
@@ -172,3 +173,7 @@ SIMPLE_JWT = {
 }
 
 THUMB_SIZE = 800
+
+GOOGLE_CLIENT_ID = config('SOCIAL_AUTH_GOOGLE_KEY', default='')
+GOOGLE_CLIENT_SECRET = config('SOCIAL_AUTH_GOOGLE_SECRET', default='')
+FACEBOOK_APP_ID = config('FACEBOOK_APP_ID', default='')

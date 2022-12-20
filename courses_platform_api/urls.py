@@ -21,6 +21,7 @@ from users.views import EmailTokenObtainPairView
 v1_0_patterns = [
     path('token/', EmailTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('social_auth/', include('social_auth.urls')),
     path('users/', include('users.urls')),
     path('courses/', include('courses.urls')),
 ]

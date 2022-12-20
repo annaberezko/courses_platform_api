@@ -10,13 +10,14 @@ from rest_framework.authtoken.models import Token
 
 from courses_platform_api.mixins import GeneratorMixin
 from courses_platform_api.settings import EMAIL_HOST_USER, FRONT_END_NEW_PASSWORD_URL
-from courses_platform_api.choices_types import ProfileRoles
+from courses_platform_api.choices_types import ProfileRoles, AuthProvider
 from users.managers import UserManager
 
 
 class User(AbstractBaseUser):
+    auth_provider = models.IntegerField('provider', choices=AuthProvider.CHOICES, default=AuthProvider.EMAIL)
     slug = models.SlugField('slug', max_length=20, unique=True)
-    role = models.IntegerField('role', choices=ProfileRoles.CHOICES, default=3)
+    role = models.IntegerField('role', choices=ProfileRoles.CHOICES, default=ProfileRoles.LEARNER)
     first_name = models.CharField('first name', max_length=50, null=True, blank=True)
     last_name = models.CharField('last name', max_length=50, null=True, blank=True)
     email = models.EmailField('email address', unique=True)

@@ -1,0 +1,68 @@
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Title</title>
+        <meta name="google-signin-scope" content="profile email">
+        <meta name="google-signin-client_id"
+              content="470862291677-iadlniqs4e2mcjte8p6qm0nj22t9q5b6.apps.googleusercontent.com">
+        <script src="https://apis.google.com/js/platform.js" async defer></script>
+    </head>
+    <body>
+        <div class="g-signin2" data-onsuccess="onSignIn" data-theme="dark"></div>
+        <script>
+            {#function onSignIn(googleUser) {#}
+            {#    alert("+")#}
+            {#    var profile = googleUser.getBasicProfile();#}
+            {#    alert(profile)#}
+            {#    console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.#}
+            {#    console.log('Name: ' + profile.getName());#}
+            {#    console.log('Image URL: ' + profile.getImageUrl());#}
+            {#    console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.#}
+            {# }#}
+
+            {#function onSignIn(googleUser) {#}
+            {##}
+            {#    var profile = googleUser.getBasicProfile();#}
+            {#    console.log("ID: " + profile.getId());#}
+            {#    var id_token = googleUser.getAuthResponse().id_token;#}
+            {#    console.log("ID TOKEN: " + id_token);#}
+            {# }#}
+
+            {#function OnSuccess(googleUser){#}
+            {#    let profile = googleUser.getBacicProfile()#}
+            {#    console.log('Email: ' + profile.getEmail())#}
+            {#    let token = googleUser.getAuthResponse().id_token#}
+            {#    console.log('Token: ' + token)#}
+            {##}
+            {#    fetch('', {#}
+            {#        method: 'POST',#}
+            {#        headers: {'Content-Type': 'application/json;charset-UTF-8'},#}
+            {#        body: JSON.stringify({#}
+            {#            email: profile.getEmail(),#}
+            {#            token: token#}
+            {#        })#}
+            {#    })#}
+            {#    .then(res => res.json())#}
+            {#        .then(data => console.log('ID: ' + data.user_id + '\nToken: ' + data.access_token)#}
+            {# }#}
+
+            {##}
+            {#function onFailure(error) {#}
+            {#    console.log(error)#}
+            {# }#}
+
+            {#function rednerButton() {#}
+            {#    gapi.singin2.render('my-signin', {#}
+            {#        'scope': 'profile email',#}
+            {#        'width': 240,#}
+            {#        'height': 50,#}
+            {#        'longtitle': true,#}
+            {#        'theme': 'dark',#}
+            {#        'onsuccess': onSuccess,#}
+            {#        'infailure': onFailure#}
+            {#    });#}
+            {# }#}
+
+    </script>
+    </body>
+</html>
