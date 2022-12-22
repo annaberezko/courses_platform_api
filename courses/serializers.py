@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from courses.models import Course, Permission
+
 User = get_user_model()
 
 

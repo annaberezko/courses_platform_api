@@ -6,7 +6,7 @@ from rest_framework.test import APITestCase, APIClient
 
 from courses.models import Permission, Course
 from courses_platform_api.choices_types import ProfileRoles
-from lessons.models import Lesson
+from lessons.models import Lesson, Question, Option
 
 User = get_user_model()
 
@@ -139,3 +139,71 @@ class LessonAPIViewTestCase(LessonInitialMixin):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response = self.client.put(self.url, self.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+class QuestionsListAPIViewTestCase(LessonInitialMixin):
+    def setUp(self):
+        super().setUp()
+        self.url = reverse('v1.0:courses:lessons:lesson-test', args=[self.course1.slug, self.lesson1.pk])
+        self.data = {
+            "question": "Is it the best question text?",
+            "options": [
+                {
+                    "option": "Option 1",
+                    "correct": True
+                },
+                {
+                    "option": "Option 2"
+                },
+                {
+                    "option": "Option 3"
+                }
+            ]
+        }
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+
+    def test_lesson_test_question_creation(self):
+        response = self.client.post(self.url, self.data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_question_update_data(self):
+        self.test_lesson_test_question_creation()
+        question = Question.objects.last()
+        self.url = reverse('v1.0:courses:lessons:lesson-test-detail', args=[self.course1.slug, self.lesson1.pk, question.pk])
+
+        options = Option.objects.all().order_by('id')
+        new_data = {
+            "question": "Is it the new question text?",
+            "options": [
+                {
+                    "id": options[0].id,
+                    "option": "Option 1 new"
+                },
+                {
+                    "id": options[1].id,
+                    "option": "Option 2",
+                    "correct": True
+                },
+                {
+                    "option": "Option 4"
+                }
+            ]
+        }
+        response = self.client.put(self.url, new_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        options = Option.objects.all().order_by('id')
+        self.assertEqual(Question.objects.last().question, "Is it the new question text?")
+        self.assertEqual(options.count(), 4)
+        self.assertEqual(options[0].option, "Option 1 new")
+        self.assertEqual(options[0].correct, False)
+
+        url = reverse('v1.0:courses:lessons:option-detail', args=[
+            self.course1.slug,
+            self.lesson1.pk,
+            question.pk,
+            options[3].pk
+        ])
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Option.objects.all().count(), 3)
