@@ -14,7 +14,7 @@ from courses.serializers import CoursesListSerializer, CourseSerializer, CourseL
     LearnerCoursesListSerializer
 from courses_platform_api.mixins import ImageMixin
 from courses_platform_api.permissions import IsSuperuserOrOwner, \
-    IsSuperuserAllOrOwnerAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly
+    IsSuperuserAllOrOwnerAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly, LearnerPermission
 from courses_platform_api.choices_types import ProfileRoles
 from users.mixin import UsersListAdministratorLimitPermissionAPIView
 from users.models import Lead
@@ -154,3 +154,14 @@ class CourseLearnerSwitchAccessAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         Permission.objects.filter(course__slug=slug, user__slug=user_slug).update(**serializer.validated_data)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class SubscribeToCourseAPIView(APIView):
+    permission_classes = (LearnerPermission, )
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        slug = self.kwargs['slug']
+        course = Course.objects.get(slug=slug)
+        Permission.objects.get_or_create(user=user, course=course)
+        return Response(status=status.HTTP_200_OK)
