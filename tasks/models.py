@@ -9,21 +9,10 @@ from imagekit.models import ProcessedImageField
 
 from courses_platform_api.images import ImageThumbnail
 from courses_platform_api.settings import VALID_EXTENSIONS
-from lessons.models import Lesson
+from lessons.models import Lesson, Question, Option
 from courses_platform_api.choices_types import TaskStatus
 
 User = get_user_model()
-
-
-class Question(models.Model):
-    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='questions')
-    question = models.CharField('lesson name', max_length=120)
-
-
-class Option(models.Model):
-    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='options')
-    option = models.CharField('test option', max_length=100)
-    correct = models.BooleanField(default=False)
 
 
 class Answer(models.Model):

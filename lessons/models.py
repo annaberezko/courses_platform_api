@@ -34,3 +34,15 @@ class Material(models.Model):
 
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='materials')
     file = models.FileField(upload_to=file_path, validators=[FileExtensionValidator(FILES_EXTENSIONS), validate_size])
+    lookup_url_kwarg = 'material_pk'
+
+
+class Question(models.Model):
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='questions')
+    question = models.CharField('lesson name', max_length=120)
+
+
+class Option(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='options')
+    option = models.CharField('test option', max_length=100)
+    correct = models.BooleanField(default=False)
