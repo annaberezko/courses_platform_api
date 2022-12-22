@@ -1,7 +1,7 @@
 from django.urls import path, include
 
 from courses.views import CoursesListAPIView, CourseAPIView, CoursesShortListAPIView, CoursesSwitchStatusAPIView, \
-    CourseLearnersListAPIView, CourseLearnerSwitchAccessAPIView, CourseCuratorsListAPIView
+    CourseLearnersListAPIView, CourseLearnerSwitchAccessAPIView, CourseCuratorsListAPIView, SubscribeToCourseAPIView
 
 app_name = 'courses'
 
@@ -9,6 +9,7 @@ urlpatterns = [
     path('', CoursesListAPIView.as_view(), name='course-list'),
     path('short-list/', CoursesShortListAPIView.as_view(), name='course-short-list'),
     path('<str:slug>/', CourseAPIView.as_view(), name='course-detail'),
+    path('<str:slug>/subscribe/', SubscribeToCourseAPIView.as_view(), name='subscribe-to-course'),
     path('<str:slug>/lessons/', include('lessons.urls')),
     path('<str:slug>/curators/', CourseCuratorsListAPIView.as_view(), name='course-curator-list'),
     path('<str:slug>/learners/', CourseLearnersListAPIView.as_view(), name='course-learner-list'),

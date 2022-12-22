@@ -301,11 +301,12 @@ class CoursesSwitchStatusAPIViewTestCase(APITestCase):
         self.assertEqual(response.data['is_active'], True)
 
 
-class CourseLearnersListAPIViewTestCase(APITestCase):
+class CourseLearnersMixin(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create_superuser(email='super@super.super', password='strong')
-        self.user1 = User.objects.create_user(email='user1@user.com', password='strong', role=ProfileRoles.ADMINISTRATOR)
+        self.user1 = User.objects.create_user(email='user1@user.com', password='strong',
+                                              role=ProfileRoles.ADMINISTRATOR)
         self.user2 = User.objects.create_user(email='user2@user.com', password='strong', role=ProfileRoles.CURATOR)
         self.user3 = User.objects.create_user(email='user3@user.com', password='strong')
         self.user4 = User.objects.create_user(email='user4@user.com', password='strong')
@@ -324,6 +325,10 @@ class CourseLearnersListAPIViewTestCase(APITestCase):
         self.permission5 = Permission.objects.create(user=self.user7, course=self.course1)
         self.permission6 = Permission.objects.create(user=self.user8, course=self.course1)
 
+
+class CourseLearnersListAPIViewTestCase(CourseLearnersMixin):
+    def setUp(self):
+        super().setUp()
         self.url = reverse('v1.0:courses:course-learner-list', args=[self.course1.slug])
 
     def test_course_learners_list_unauthorized_permission_no_access(self):
@@ -382,3 +387,44 @@ class CourseLearnerSwitchAccessAPIViewTestCase(APITestCase):
         response = self.client.put(self.url, {'access': True, 'date_end': '2025-01-01'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(Permission.objects.values('date_end').get(course=self.course1, user=self.user3), '2025-01-01')
+
+
+class SubscribeToCourseAPIViewAPIViewTestCase(CourseLearnersMixin):
+    def setUp(self):
+        super().setUp()
+        self.url = reverse('v1.0:courses:subscribe-to-course', args=[self.course1.slug])
+
+    def test_course_subscribe_unauthorized_permission_no_access(self):
+        client = APIClient()
+        response = client.post(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_course_subscribe_superuser_permission_no_access(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_course_subscribe_administrator_permission_no_access(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user1@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_course_subscribe_curator_permission_no_access(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user2@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_course_subscribe_learner_without_access(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user9@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_course_subscribe_learner_with_access_do_nothing(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user3@user.com', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
