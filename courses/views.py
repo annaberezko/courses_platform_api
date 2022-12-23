@@ -1,3 +1,5 @@
+import os.path
+
 from django.contrib.auth import get_user_model
 from django.db.models import Value, F
 from django.db.models.functions import Concat
@@ -76,8 +78,9 @@ class CourseAPIView(generics.RetrieveUpdateDestroyAPIView):
         serializer.save()
 
     def perform_destroy(self, instance):
-        if instance.cover:
-            ImageMixin.remove(instance.cover)
+        folder = "media/%s/courses/%s/" % (instance.admin.slug, instance.slug)
+        if os.path.isdir(folder):
+            os.rmdir(folder)
         instance.delete()
 
 
