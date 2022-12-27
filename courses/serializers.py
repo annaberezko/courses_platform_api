@@ -13,7 +13,7 @@ class CourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = ('slug', 'admin', 'admin_id', 'name', 'cover', 'description', 'sequence', 'is_active', 'price')
+        fields = ('slug', 'admin', 'admin_id', 'name', 'cover', 'description', 'short_description', 'video', 'sequence', 'is_active', 'price')
 
 
 class CoursesListSerializer(CourseSerializer):
@@ -25,7 +25,7 @@ class LearnerCoursesListSerializer(CoursesListSerializer):
     date_end = serializers.DateField()
 
     class Meta(CoursesListSerializer.Meta):
-        fields = ('slug', 'name', 'admin', 'cover', 'description', 'price', 'access', 'date_end')
+        fields = ('slug', 'name', 'admin', 'cover', 'description', 'short_description', 'video', 'price', 'access', 'date_end')
 
 
 class CourseLearnersListSerializer(serializers.ModelSerializer):
