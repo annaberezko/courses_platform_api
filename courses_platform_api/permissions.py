@@ -4,6 +4,8 @@ from rest_framework.permissions import IsAuthenticated, SAFE_METHODS
 
 from courses.models import Course, Permission
 from courses_platform_api.choices_types import ProfileRoles
+from lessons.models import Lesson
+
 User = get_user_model()
 
 
@@ -128,3 +130,18 @@ class LessonPermission(IsAuthenticated):
                 (role == ProfileRoles.CURATOR and request.method in SAFE_METHODS and course.is_active) or
                 (role == ProfileRoles.LEARNER and request.method in SAFE_METHODS and learner_access)
         ))
+
+
+class IsLearnerAll(IsAuthenticated):
+    def has_permission(self, request, view):
+        perm = super().has_permission(request, view)
+        if request.user:
+            role = request.user.role
+            slug = view.kwargs['slug']
+            course = Course.objects.get(slug=slug)
+            if role == ProfileRoles.LEARNER:
+                lesson = Lesson.objects.values('free_access').get(pk=view.kwargs['pk'])
+                course_permission = Permission.objects.filter(course=course, user=request.user, access=True).exists()
+                learner_access = course_permission or lesson['free_access']
+
+        return bool(perm and role == ProfileRoles.LEARNER and learner_access)

@@ -25,6 +25,7 @@ class Course(models.Model):
                                 validators=[FileExtensionValidator(VALID_EXTENSIONS)])
     description = models.TextField('description', null=True, blank=True)
     short_description = models.CharField('short description', null=True, blank=True, max_length=200)
+    video = models.CharField('presentation video', null=True, blank=True, max_length=200)
     sequence = models.BooleanField('sequence tasks', default=False)
     is_active = models.BooleanField('is active', default=True)
     price = models.SmallIntegerField(null=True, blank=True)

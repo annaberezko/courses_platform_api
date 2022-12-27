@@ -1,13 +1,13 @@
-import json
-
 from django.contrib.postgres.aggregates import ArrayAgg
-from rest_framework import generics
+from rest_framework import generics, status
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from courses.models import Course
 from courses_platform_api.mixins import ImageMixin
 from courses_platform_api.permissions import IsSuperuserAllOrOwnerAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly, \
-    LessonPermission
-from lessons.models import Lesson, Material, Question, Option
+    LessonPermission, IsLearnerAll
+from lessons.models import Lesson, Material, Question, Option, Answer, Result
 from lessons.serializers import LessonsListSerializer, LessonSerializer, MaterialSerializer, QuestionSerializer, \
     OptionSerializer
 
@@ -99,3 +99,28 @@ class OptionAPIView(generics.DestroyAPIView):
     serializer_class = OptionSerializer
     permission_classes = (LessonPermission, )
     lookup_url_kwarg = 'option_pk'
+
+
+class TestResultAPIView(APIView):
+    permission_classes = (IsLearnerAll, )
+
+    @staticmethod
+    def check_test(user, pk):
+        questions_list = Question.objects.filter(lesson_id=pk)
+        right_answers = 0
+        for question in questions_list:
+            options = Option.objects.values_list('id').filter(question=question, correct=True)
+            if len(options) > 0 and len(options) == Answer.objects.filter(user_id=user, answer__in=options).count():
+                right_answers += 1
+        result = int(right_answers / len(questions_list) * 100)
+        Result.objects.create(lesson_id=pk, user_id=user, result=result)
+        return result
+
+    def post(self, request, pk, *args, **kwargs):
+        user = request.user.pk
+        if Result.objects.filter(lesson_id=pk, user_id=user).exists():
+            return Response({"error": "You can take the test only once."}, status=status.HTTP_403_FORBIDDEN)
+        for answer in request.data:
+            Answer.objects.get_or_create(user_id=user, answer_id=request.data[answer])
+        result = self.check_test(user, pk)
+        return Response({"result": {result}}, status=status.HTTP_201_CREATED)
