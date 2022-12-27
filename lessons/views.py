@@ -123,4 +123,4 @@ class TestResultAPIView(APIView):
         for answer in request.data:
             Answer.objects.get_or_create(user_id=user, answer_id=request.data[answer])
         result = self.check_test(user, pk)
-        return Response({"result": {result}}, status=status.HTTP_201_CREATED)
+        return Response({"result": result}, status=status.HTTP_201_CREATED)
