@@ -2,7 +2,7 @@ from django.urls import path
 
 from users.views import ResetPasswordRequestEmailAPIView, ResetPasswordSecurityCodeAPIView, RecoveryPasswordAPIView, \
     UserSignUpAPIView, UsersListAPIView, RolesListAPIView, UserAPIView, AdministratorsListAPIView, \
-    AdministratorSwitchStatusAPIView
+    AdministratorSwitchStatusAPIView, UserCoursesListAPIView, UserCourseAPIView
 
 app_name = 'users'
 
@@ -16,5 +16,7 @@ urlpatterns = [
     path('new-security-code/', ResetPasswordRequestEmailAPIView.as_view(), name='new-security-code'),
     path('recovery-password/', RecoveryPasswordAPIView.as_view(), name='recovery-password'),
     path('<slug:slug>/', UserAPIView.as_view(), name='user-detail'),
+    path('<slug:slug>/courses/', UserCoursesListAPIView.as_view(), name='user-courses-list'),
+    path('<slug:slug>/courses/<str:course_slug>/', UserCourseAPIView.as_view(), name='user-course-detail'),
     path('<slug:slug>/switch-status/', AdministratorSwitchStatusAPIView.as_view(), name='administrator-switch-status'),
 ]

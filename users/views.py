@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from courses.models import Permission, Course
+from courses.serializers import CourseSerializer
 from courses_platform_api.permissions import IsSuperuserOrAdministratorAllOrCuratorReadOnly, IsSuperuser
 from courses_platform_api.choices_types import ProfileRoles
 from users.filters import UsersFilter
@@ -186,3 +187,24 @@ class AdministratorSwitchStatusAPIView(APIView):
         user = User.objects.values_list('id').get(slug=slug)[0]
         Permission.objects.create(user_id=user, access=True)
         return Response({'access': True}, status=status.HTTP_200_OK)
+
+
+class UserCoursesListAPIView(generics.ListAPIView):
+    serializer_class = CourseSerializer
+    permission_classes = (AllowAny, )
+
+    def get_queryset(self):
+        slug = self.kwargs['slug']
+        return Course.objects.filter(admin__slug=slug)
+
+
+class UserCourseAPIView(generics.RetrieveAPIView):
+    serializer_class = CourseSerializer
+    permission_classes = (AllowAny, )
+
+    def get(self, request, *args, **kwargs):
+        course_slug = self.kwargs.get('course_slug')
+        if course := Course.objects.get(slug=course_slug):
+            serializer = CourseSerializer(course)
+            return Response(serializer.data)
+        return Response(status=status.HTTP_204_NO_CONTENT)
