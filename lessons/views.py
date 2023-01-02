@@ -6,10 +6,10 @@ from rest_framework.views import APIView
 from courses.models import Course
 from courses_platform_api.mixins import ImageMixin
 from courses_platform_api.permissions import IsSuperuserAllOrOwnerAllOrCuratorActiveCoursesReadOnlyLearnerReadOnly, \
-    LessonPermission, IsLearnerAll
-from lessons.models import Lesson, Material, Question, Option, Answer, Result
+    LessonPermission, IsLessonLearnerAll
+from lessons.models import Lesson, Material, Question, Option, Answer, Result, ImageTask, Task
 from lessons.serializers import LessonsListSerializer, LessonSerializer, MaterialSerializer, QuestionSerializer, \
-    OptionSerializer
+    OptionSerializer, ImageTaskSerializer, TaskSerializer
 
 
 class LessonsListAPIView(generics.ListCreateAPIView):
@@ -102,7 +102,7 @@ class OptionAPIView(generics.DestroyAPIView):
 
 
 class TestResultAPIView(APIView):
-    permission_classes = (IsLearnerAll, )
+    permission_classes = (IsLessonLearnerAll, )
 
     @staticmethod
     def check_test(user, pk):
@@ -124,3 +124,31 @@ class TestResultAPIView(APIView):
             Answer.objects.get_or_create(user_id=user, answer_id=request.data[answer])
         result = self.check_test(user, pk)
         return Response({"result": result}, status=status.HTTP_201_CREATED)
+
+
+# class TasksListAPIView(generics.CreateAPIView):
+#     """
+#     Create new task learner
+#     """
+#     queryset = Task.objects.all()
+#     serializer_class = TaskSerializer
+#     permission_classes = (IsLessonLearnerAll, )
+
+    # def get_queryset(self):
+    #     if self.request.method == 'GET':
+    #         lesson = self.kwargs['pk']
+    #         return Question.objects.filter(lesson_id=lesson)
+    #     return super().get_queryset()
+
+
+class TaskAPIView(generics.CreateAPIView):
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer
+    permission_classes = (IsLessonLearnerAll, )
+
+
+class ImageTaskAPIView(generics.DestroyAPIView):
+    queryset = ImageTask.objects.all()
+    serializer_class = ImageTaskSerializer
+    permission_classes = (IsLessonLearnerAll, )
+    lookup_url_kwarg = 'image_pk'

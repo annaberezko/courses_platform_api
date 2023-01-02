@@ -1,13 +1,15 @@
 from django.urls import path
 
 from lessons.views import LessonsListAPIView, LessonAPIView, MaterialAPIView, MaterialDetailAPIView, \
-    QuestionsListAPIView, QuestionAPIView, OptionAPIView, TestResultAPIView
+    QuestionsListAPIView, QuestionAPIView, OptionAPIView, TestResultAPIView, TaskAPIView, ImageTaskAPIView
 
 app_name = 'lessons'
 
 urlpatterns = [
     path('', LessonsListAPIView.as_view(), name='lesson-list'),
     path('<int:pk>/', LessonAPIView.as_view(), name='lesson-detail'),
+    path('<int:pk>/task/', TaskAPIView.as_view(), name='lesson-task'),
+    path('<int:pk>/task/<int:image_pk>/', ImageTaskAPIView.as_view(), name='lesson-task-image'),
     path('<int:pk>/tests/', QuestionsListAPIView.as_view(), name='lesson-test'),
     path('<int:pk>/tests/result/', TestResultAPIView.as_view(), name='lesson-test-result'),
     path('<int:pk>/tests/<int:test_pk>/', QuestionAPIView.as_view(), name='lesson-test-detail'),

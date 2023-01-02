@@ -132,7 +132,7 @@ class LessonPermission(IsAuthenticated):
         ))
 
 
-class IsLearnerAll(IsAuthenticated):
+class IsLessonLearnerAll(IsAuthenticated):
     def has_permission(self, request, view):
         perm = super().has_permission(request, view)
         if request.user:

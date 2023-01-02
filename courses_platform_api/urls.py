@@ -16,11 +16,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework_simplejwt.views import TokenRefreshView
-from users.views import EmailTokenObtainPairView
+from users.views import EmailTokenObtainPairView, UserProfileAPIView
 
 v1_0_patterns = [
     path('token/', EmailTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('profile/', UserProfileAPIView.as_view(), name='user-profile'),
     path('users/', include('users.urls')),
     path('courses/', include('courses.urls')),
 ]

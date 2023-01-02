@@ -14,18 +14,20 @@ User = get_user_model()
 
 
 class TokenEmailObtainPairSerializer(TokenObtainPairSerializer):
-        username_field = User.USERNAME_FIELD
+    username_field = User.USERNAME_FIELD
 
-        default_error_messages = {
-                "no_active_account": "Email or Password is not valid. Please, check provided information."
-        }
+    default_error_messages = {
+            "no_active_account": "Email or Password is not valid. Please, check provided information."
+    }
 
-        @classmethod
-        def get_token(cls, user):
-            token = super().get_token(user)
-            if user.role == ProfileRoles.ADMINISTRATOR:
-                token['profile_access'] = Permission.objects.filter(user=user, access=True).exists()
-            return token
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['first_name'] = user.first_name
+        token['last_name'] = user.last_name
+        if user.role == ProfileRoles.ADMINISTRATOR:
+            token['profile_access'] = Permission.objects.filter(user=user, access=True).exists()
+        return token
 
 
 class RequestEmailSerializer(serializers.Serializer):
@@ -66,6 +68,24 @@ class RecoveryPasswordSerializer(serializers.Serializer):
         except exceptions.ValidationError as e:
             raise serializers.ValidationError({'password': list(e.messages)})
         return attr
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    email = serializers.CharField(read_only=True)
+    password = serializers.CharField(write_only=True, required=False, validators=[validators.validate_password])
+    confirm_password = serializers.CharField(write_only=True, required=False)
+
+    class Meta:
+        model = User
+        fields = ('email', 'first_name', 'last_name', 'password', 'confirm_password')
+
+    def validate(self, attrs):
+        if 'password' in attrs:
+            if 'confirm_password' not in attrs:
+                raise serializers.ValidationError('With password field confirm_password field is required')
+            if attrs['password'] != attrs['confirm_password']:
+                raise serializers.ValidationError({'confirm_password': "Password fields didn't match."})
+        return attrs
 
 
 class UserSignUpSerializer(serializers.ModelSerializer):

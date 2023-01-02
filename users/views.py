@@ -4,7 +4,7 @@ from django.db.models.functions import Concat
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status
 from rest_framework.filters import OrderingFilter
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -18,7 +18,7 @@ from users.mixin import UserMixin, UsersListAdministratorLimitPermissionAPIView
 from users.models import InvitationToken, Lead
 from users.serializers import TokenEmailObtainPairSerializer, RequestEmailSerializer, SecurityCodeSerializer, \
     UserSignUpSerializer, UsersListSerializer, RecoveryPasswordSerializer, UsersListForCuratorSerializer, \
-    CreateUserSerializer, UserSerializer
+    CreateUserSerializer, UserSerializer, UserProfileSerializer
 
 User = get_user_model()
 
@@ -208,3 +208,20 @@ class UserCourseAPIView(generics.RetrieveAPIView):
             serializer = CourseSerializer(course)
             return Response(serializer.data)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class UserProfileAPIView(APIView):
+    serializer_class = UserProfileSerializer
+    permission_classes = (IsAuthenticated, )
+
+    def get(self, request, *args, **kwargs):
+        serializer = self.serializer_class(self.request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, *args, **kwargs):
+        data = request.data
+        serializer = self.serializer_class(self.request.user, data=data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_400_BAD_REQUEST)

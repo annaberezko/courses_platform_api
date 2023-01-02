@@ -67,7 +67,7 @@ class Result(models.Model):
 class Task(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='tasks')
-    status = models.IntegerField('status', choices=TaskStatus.CHOICES, default=1)
+    status = models.IntegerField('status', choices=TaskStatus.CHOICES, default=TaskStatus.NEW)
     text = models.CharField('text of home task from user', max_length=250, null=True, blank=True)
     curator = models.ForeignKey(User, related_name='tasks', on_delete=models.CASCADE, null=True, blank=True)
     review = models.CharField('comment from curator', max_length=250, null=True, blank=True)

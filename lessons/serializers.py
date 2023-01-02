@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from lessons.models import Lesson, Material, Question, Option
+from lessons.models import Lesson, Material, Question, Option, Task
 
 
 class MaterialSerializer(serializers.ModelSerializer):
@@ -56,3 +56,26 @@ class QuestionSerializer(serializers.ModelSerializer):
             option_data['question'] = instance
             Option.objects.update_or_create(pk=option_data['id'], defaults=option_data)
         return instance
+
+
+class ImageTaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Material
+        fields = ('image', )
+
+
+class TaskSerializer(serializers.ModelSerializer):
+    images = ImageTaskSerializer(many=True, required=False)
+
+    class Meta:
+        model = Task
+        fields = ('text', 'images')
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        lesson = self.context.get('view').kwargs.get('pk')
+        task = Task.objects.create(user=user, lesson_id=lesson, text=validated_data['text'])
+        if 'images' in validated_data:
+            for image_data in validated_data['images']:
+                Option.objects.create(task=task, **image_data)
+        return task
